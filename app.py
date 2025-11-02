@@ -528,6 +528,13 @@ def checker_auth():
                     'success': False,
                     'error': f'Tu dispositivo ya está vinculado a otra key activa con {checks_remaining} checks disponibles. Usa esa key o contacta al administrador.'
                 }), 403
+            else:
+                # La key anterior no tiene checks disponibles, permitir cambio
+                # Desvincular dispositivo de la key anterior
+                existing_user.device_fingerprint = None
+                existing_user.last_ip = None
+                db.session.commit()
+                logger.info(f"Device unlinked from user: {existing_user.name} (no checks remaining)")
         
         # Si la key ya tiene un dispositivo registrado
         if user.device_fingerprint:
@@ -538,7 +545,7 @@ def checker_auth():
                     'error': 'Esta key ya está siendo usada en otro dispositivo/IP'
                 }), 403
         else:
-            # Registrar dispositivo por primera vez
+            # Registrar dispositivo
             user.device_fingerprint = current_fingerprint
             user.last_ip = ip_address
             db.session.commit()
