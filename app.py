@@ -43,6 +43,24 @@ def init_db():
     with app.app_context():
         db.create_all()
         print("✅ Base de datos inicializada")
+        
+        # Inicializar configuración por defecto si no existe
+        if Config.query.count() == 0:
+            print("📝 Inicializando configuración por defecto...")
+            default_configs = [
+                ('admin_password', 'admin123'),
+                ('stripe_pk', ''),
+                ('stripe_sk', ''),
+                ('daily_limit', '50'),
+                ('maintenance_mode', 'false')
+            ]
+            for key, value in default_configs:
+                config = Config(key=key, value=value)
+                db.session.add(config)
+            db.session.commit()
+            print("✅ Configuración inicial creada")
+            print("🔑 Password admin por defecto: admin123")
+            print("⚠️ CAMBIA LA CONTRASEÑA EN EL PANEL ADMIN")
 
 # Ejecutar inicialización al importar el módulo
 init_db()
