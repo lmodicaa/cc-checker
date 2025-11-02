@@ -300,7 +300,7 @@ def parse_error_details(error):
 # ==================== RUTAS ADMIN ====================
 
 @app.route('/admin/login', methods=['GET', 'POST'])
-@rate_limit(max_requests=5, window_seconds=300)  # 5 intentos cada 5 minutos
+@rate_limit(max_requests=20, window_seconds=60)  # 20 intentos por minuto
 def admin_login():
     if request.method == 'POST':
         password = request.json.get('password', '').strip()
