@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Snoop Dogg Checker - Beta Cerrada</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .auth-container {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 450px;
+            width: 100%;
+            backdrop-filter: blur(10px);
+        }
+
+        .auth-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .auth-header h1 {
+            color: #667eea;
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .auth-header .subtitle {
+            color: #666;
+            font-size: 16px;
+            margin-bottom: 5px;
+        }
+
+        .auth-header .beta-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 6px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-top: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            color: #333;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            font-family: 'Courier New', monospace;
+            transition: all 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .btn-auth {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .btn-auth:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-auth:active {
+            transform: translateY(0);
+        }
+
+        .btn-auth:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .error-message {
+            background: #fee2e2;
+            color: #991b1b;
+            padding: 12px 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: none;
+            text-align: center;
+            border: 1px solid #fca5a5;
+        }
+
+        .success-message {
+            background: #d1fae5;
+            color: #065f46;
+            padding: 12px 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: none;
+            text-align: center;
+            border: 1px solid #6ee7b7;
+        }
+
+        .info-box {
+            background: #f0f9ff;
+            border: 1px solid #bae6fd;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .info-box .icon {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+
+        .info-box p {
+            color: #0369a1;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .footer a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s linear infinite;
+            margin-left: 10px;
+            vertical-align: middle;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .features {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 25px;
+        }
+
+        .feature-item {
+            text-align: center;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .feature-item .icon {
+            font-size: 28px;
+            margin-bottom: 5px;
+        }
+
+        .feature-item .text {
+            font-size: 12px;
+            color: #666;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-header">
+            <h1>🎤 Snoop Dogg Checker</h1>
+            <p class="subtitle">Verificación de Tarjetas</p>
+            <span class="beta-badge">🔒 BETA CERRADA</span>
+        </div>
+
+        <div id="error-message" class="error-message"></div>
+        <div id="success-message" class="success-message"></div>
+
+        <form id="auth-form">
+            <div class="form-group">
+                <label for="access-key">🔑 Clave de Acceso</label>
+                <input type="text" id="access-key" placeholder="Pega tu clave de acceso aquí" required autofocus>
+            </div>
+
+            <button type="submit" class="btn-auth" id="submit-btn">
+                Acceder al Checker
+            </button>
+        </form>
+
+        <div class="features">
+            <div class="feature-item">
+                <div class="icon">✅</div>
+                <div class="text">Verificación Auth</div>
+            </div>
+            <div class="feature-item">
+                <div class="icon">⚡</div>
+                <div class="text">Respuesta Rápida</div>
+            </div>
+            <div class="feature-item">
+                <div class="icon">🔒</div>
+                <div class="text">100% Seguro</div>
+            </div>
+            <div class="feature-item">
+                <div class="icon">📊</div>
+                <div class="text">Info Detallada</div>
+            </div>
+        </div>
+
+        <div class="info-box">
+            <div class="icon">💡</div>
+            <p><strong>¿No tienes acceso?</strong><br>
+            Contacta al administrador para obtener tu clave de acceso única.</p>
+        </div>
+
+        <div class="footer">
+            <a href="/admin/login">👤 Panel Admin</a>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('auth-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const key = document.getElementById('access-key').value.trim();
+            const errorDiv = document.getElementById('error-message');
+            const successDiv = document.getElementById('success-message');
+            const submitBtn = document.getElementById('submit-btn');
+
+            errorDiv.style.display = 'none';
+            successDiv.style.display = 'none';
+
+            if (!key) {
+                errorDiv.textContent = '❌ Por favor ingresa una clave de acceso';
+                errorDiv.style.display = 'block';
+                return;
+            }
+
+            // Deshabilitar botón y mostrar loading
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = 'Verificando... <span class="loading"></span>';
+
+            try {
+                const response = await fetch('/checker/auth', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ key: key })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    successDiv.textContent = '✅ Acceso concedido! Redirigiendo...';
+                    successDiv.style.display = 'block';
+                    setTimeout(() => {
+                        window.location.href = '/checker';
+                    }, 1000);
+                } else {
+                    errorDiv.textContent = '❌ ' + (data.error || 'Clave inválida');
+                    errorDiv.style.display = 'block';
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Acceder al Checker';
+                }
+            } catch (error) {
+                errorDiv.textContent = '❌ Error de conexión. Intenta nuevamente.';
+                errorDiv.style.display = 'block';
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Acceder al Checker';
+            }
+        });
+
+        // Auto-paste si el clipboard tiene una key
+        document.getElementById('access-key').addEventListener('focus', async function() {
+            try {
+                const clipboardText = await navigator.clipboard.readText();
+                if (clipboardText && clipboardText.length > 20 && !this.value) {
+                    this.value = clipboardText;
+                }
+            } catch (err) {
+                // Clipboard API no disponible o sin permisos
+            }
+        });
+    </script>
+</body>
+</html>
+

@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Snoop Dogg Checker - Beta</title>
+    <script src="https://js.stripe.com/v3/"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        .container {
+            max-width: 520px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3), 
+                        0 0 0 1px rgba(255, 255, 255, 0.2);
+            padding: 48px 40px;
+            animation: slideUp 0.5s ease-out;
+        }
+        
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+        
+        h1 {
+            color: #1a202c;
+            font-size: 32px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+        }
+        
+        .user-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+            border-radius: 12px;
+            margin-bottom: 24px;
+            border: 1px solid rgba(102, 126, 234, 0.2);
+        }
+        
+        .user-info .checks-remaining {
+            font-weight: 600;
+            color: #667eea;
+            font-size: 14px;
+        }
+        
+        .user-info .logout-btn {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+            padding: 6px 12px;
+            border-radius: 8px;
+            border: none;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .user-info .logout-btn:hover {
+            background: rgba(239, 68, 68, 0.2);
+            transform: translateY(-1px);
+        }
+        
+        .beta-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+        
+        .form-group {
+            margin-bottom: 24px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 10px;
+            color: #2d3748;
+            font-weight: 600;
+            font-size: 14px;
+            letter-spacing: 0.3px;
+            text-transform: uppercase;
+        }
+        
+        #card-element {
+            padding: 18px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            background: white;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        #card-element.StripeElement--focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+        }
+        
+        #card-element.StripeElement--invalid {
+            border-color: #ef4444;
+            box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.1);
+        }
+        
+        #card-element.StripeElement--complete {
+            border-color: #10b981;
+        }
+        
+        #card-errors {
+            color: #ef4444;
+            margin-top: 12px;
+            font-size: 13px;
+            font-weight: 500;
+            min-height: 20px;
+            padding-left: 4px;
+        }
+        
+        button {
+            width: 100%;
+            padding: 18px 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            margin-top: 8px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+        
+        button:hover:not(:disabled)::before {
+            left: 100%;
+        }
+        
+        button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5);
+        }
+        
+        button:active:not(:disabled) {
+            transform: translateY(0);
+        }
+        
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .results {
+            margin-top: 32px;
+            padding: 24px;
+            background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+            border-radius: 16px;
+            display: none;
+            animation: fadeIn 0.4s ease-out;
+            border: 1px solid #e2e8f0;
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .results h3 {
+            color: #2d3748;
+            margin-bottom: 16px;
+            font-size: 18px;
+            font-weight: 600;
+        }
+        
+        .result-item {
+            padding: 18px 20px;
+            margin-bottom: 12px;
+            border-radius: 12px;
+            border-left: 4px solid;
+            font-weight: 500;
+            font-size: 15px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        .result-approved {
+            background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+            border-color: #10b981;
+            color: #065f46;
+        }
+        
+        .result-declined {
+            background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+            border-color: #ef4444;
+            color: #991b1b;
+        }
+        
+        .result-error {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border-color: #f59e0b;
+            color: #92400e;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            margin-top: 24px;
+        }
+        
+        .loading p {
+            margin-top: 16px;
+            color: #64748b;
+            font-weight: 500;
+        }
+        
+        .spinner {
+            border: 3px solid rgba(102, 126, 234, 0.1);
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 48px;
+            height: 48px;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .error-details {
+            margin-top: 12px;
+            padding: 12px;
+            background: rgba(239, 68, 68, 0.1);
+            border-radius: 8px;
+            font-size: 13px;
+        }
+        
+        .error-details strong {
+            display: block;
+            margin-bottom: 6px;
+            color: #991b1b;
+        }
+        
+        .error-code {
+            font-family: 'Courier New', monospace;
+            background: rgba(0, 0, 0, 0.05);
+            padding: 4px 8px;
+            border-radius: 4px;
+            display: inline-block;
+            margin-top: 4px;
+        }
+        
+        .copy-button {
+            margin-top: 16px;
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-block;
+        }
+        
+        .copy-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        
+        .copy-button:active {
+            transform: translateY(0);
+        }
+        
+        .mode-badge {
+            display: inline-block;
+            background: rgba(16, 185, 129, 0.1);
+            color: #065f46;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+        
+        @media (max-width: 640px) {
+            .container {
+                padding: 32px 24px;
+                border-radius: 20px;
+            }
+            
+            h1 {
+                font-size: 28px;
+            }
+            
+            .user-info {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <span class="beta-badge">🔒 BETA CERRADA</span>
+            <h1>🎤 Snoop Dogg Checker</h1>
+        </div>
+        
+        <div class="user-info">
+            <div class="checks-remaining">
+                📊 <span id="checks-remaining">--</span> checks restantes hoy
+            </div>
+            <button class="logout-btn" onclick="window.location.href='/checker/logout'">
+                🚪 Salir
+            </button>
+        </div>
+        
+        <div style="text-align: center; margin-bottom: 24px;">
+            <span class="mode-badge">✅ Modo: Auth (Sin Cargo)</span>
+            <div id="stripe-status" style="margin-top: 10px; padding: 8px; border-radius: 8px; font-size: 12px; font-weight: 600;">
+                <span style="color: #f59e0b;">⏳ Cargando Stripe...</span>
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label>Información de la Tarjeta</label>
+            <div id="card-element"></div>
+            <div id="card-errors" role="alert"></div>
+        </div>
+        
+        <button id="submit-btn" onclick="verifyCard()">🔍 Verificar Tarjeta (Auth)</button>
+        
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Verificando tarjeta...</p>
+        </div>
+        
+        <div class="results" id="results">
+            <h3>Resultado</h3>
+            <div id="result-content"></div>
+        </div>
+    </div>
+
+    <script>
+        let stripe = null;
+        let elements = null;
+        let cardElement = null;
+        let verifyStartTime = null;
+        let checksRemaining = 0;
+
+        // Función para cargar configuración del servidor
+        async function loadStripeConfig() {
+            console.log('Cargando configuración de Stripe...');
+            try {
+                const response = await fetch('/checker/get_config');
+                console.log('Respuesta recibida:', response.status);
+                
+                if (!response.ok) {
+                    throw new Error('Error al obtener configuración: ' + response.status);
+                }
+                
+                const data = await response.json();
+                console.log('Datos recibidos:', data);
+                
+                if (data.success && data.stripe_pk) {
+                    console.log('Configuración válida recibida');
+                    const initialized = initializeStripe(data.stripe_pk);
+                    if (initialized) {
+                        checksRemaining = data.checks_remaining || 0;
+                        document.getElementById('checks-remaining').textContent = checksRemaining;
+                        document.getElementById('stripe-status').innerHTML = '<span style="color: #10b981;">✅ Stripe listo</span>';
+                        console.log('✅ Sistema listo para usar');
+                    } else {
+                        document.getElementById('stripe-status').innerHTML = '<span style="color: #ef4444;">❌ Error inicializando Stripe</span>';
+                    }
+                } else {
+                    console.error('Configuración inválida:', data);
+                    document.getElementById('stripe-status').innerHTML = '<span style="color: #ef4444;">❌ Sin configuración</span>';
+                    showResult('error', '❌ Error: El administrador no ha configurado las claves de Stripe. Contacta al admin.', {});
+                }
+            } catch (error) {
+                console.error('Error cargando configuración:', error);
+                document.getElementById('stripe-status').innerHTML = '<span style="color: #ef4444;">❌ Error de conexión</span>';
+                showResult('error', '❌ Error de conexión con el servidor: ' + error.message, {});
+            }
+        }
+
+        function initializeStripe(pkKey) {
+            if (!pkKey) {
+                console.error('No se proporcionó PK key');
+                showResult('error', '❌ Error: No se pudo obtener la clave de Stripe. Contacta al administrador.', {});
+                return false;
+            }
+            
+            console.log('Inicializando Stripe con PK:', pkKey.substring(0, 20) + '...');
+            
+            try {
+                stripe = Stripe(pkKey);
+                elements = stripe.elements();
+                
+                cardElement = elements.create('card', {
+                    style: {
+                        base: {
+                            fontSize: '15px',
+                            color: '#1a202c',
+                            fontFamily: "'Inter', system-ui, sans-serif",
+                            '::placeholder': {
+                                color: '#a0aec0',
+                            },
+                        },
+                        invalid: {
+                            color: '#ef4444',
+                            iconColor: '#ef4444',
+                        },
+                    }
+                });
+                
+                cardElement.mount('#card-element');
+                
+                cardElement.on('change', function(event) {
+                    const displayError = document.getElementById('card-errors');
+                    if (event.error) {
+                        displayError.textContent = event.error.message;
+                    } else {
+                        displayError.textContent = '';
+                    }
+                });
+                
+                console.log('✅ Stripe inicializado correctamente');
+                return true;
+            } catch (error) {
+                console.error('Error inicializando Stripe:', error);
+                showResult('error', '❌ Error inicializando Stripe: ' + error.message, {});
+                return false;
+            }
+        }
+
+        async function verifyCard() {
+            if (!stripe || !cardElement) {
+                showResult('error', 'Error: Stripe no está inicializado correctamente.', {});
+                return;
+            }
+
+            if (checksRemaining <= 0) {
+                showResult('error', '❌ Has alcanzado tu límite diario de verificaciones. Intenta mañana.', {});
+                return;
+            }
+
+            const submitBtn = document.getElementById('submit-btn');
+            const loading = document.getElementById('loading');
+            const results = document.getElementById('results');
+            
+            submitBtn.disabled = true;
+            loading.style.display = 'block';
+            results.style.display = 'none';
+            verifyStartTime = Date.now();
+
+            try {
+                const { paymentMethod, error } = await stripe.createPaymentMethod({
+                    type: 'card',
+                    card: cardElement,
+                });
+
+                if (error) {
+                    showResult('error', `Error: ${error.message}`, {});
+                    return;
+                }
+
+                const response = await fetch('/checker/verify_auth', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        payment_method_id: paymentMethod.id
+                    })
+                });
+
+                const data = await response.json();
+                
+                const verifyTime = ((Date.now() - verifyStartTime) / 1000).toFixed(2);
+
+                if (data.success) {
+                    checksRemaining = data.checks_remaining || 0;
+                    document.getElementById('checks-remaining').textContent = checksRemaining;
+                    
+                    const cardInfo = data.details?.card || {};
+                    const bin = String(cardInfo.bin || '').trim();
+                    const last4 = String(cardInfo.last4 || '').trim();
+                    
+                    let reconstructedNumber = '';
+                    if (bin && bin.length >= 6 && last4 && last4.length === 4) {
+                        const bin6 = bin.substring(0, 6);
+                        reconstructedNumber = bin6 + '******' + last4;
+                    } else if (last4 && last4.length === 4) {
+                        reconstructedNumber = '****' + '****' + '****' + last4;
+                    } else {
+                        reconstructedNumber = '************' + (last4 || '****');
+                    }
+                    
+                    window.cardNumber = reconstructedNumber;
+                    window.cardExpMonth = cardInfo.exp_month?.toString().padStart(2, '0') || '**';
+                    window.cardExpYear = cardInfo.exp_year?.toString() || '****';
+                    window.cardCvv = '***';
+                    
+                    const binInfo = data.details?.bin_info || null;
+                    
+                    showResult('approved', data.message, data.details || {}, verifyTime, binInfo);
+                } else {
+                    // Actualizar checks restantes incluso en error
+                    if (data.checks_remaining !== undefined) {
+                        checksRemaining = data.checks_remaining;
+                        document.getElementById('checks-remaining').textContent = checksRemaining;
+                    }
+                    
+                    const errorType = data.details?.type || 'unknown';
+                    const errorMsg = data.error || 'Error desconocido';
+                    
+                    let fullMessage = errorMsg;
+                    if (errorType === 'cvv_error') {
+                        fullMessage = '❌ CVV INCORRECTO';
+                    } else if (errorType === 'card_number_error') {
+                        fullMessage = '❌ NÚMERO DE TARJETA INVÁLIDO';
+                    } else if (errorType === 'expired_card') {
+                        fullMessage = '❌ TARJETA EXPIRADA';
+                    } else if (errorType === 'card_declined') {
+                        fullMessage = `❌ TARJETA RECHAZADA`;
+                    }
+                    
+                    showResult(data.status === 'declined' ? 'declined' : 'error', fullMessage, data.details || {});
+                }
+
+            } catch (error) {
+                showResult('error', `Error: ${error.message}`, {});
+            } finally {
+                submitBtn.disabled = false;
+                loading.style.display = 'none';
+            }
+        }
+
+        function getCountryEmoji(code) {
+            if (!code) return '🌍';
+            const codeStr = String(code).toUpperCase();
+            const emojis = {
+                'US': '🇺🇸', 'CA': '🇨🇦', 'GB': '🇬🇧', 'MX': '🇲🇽', 'BR': '🇧🇷',
+                'AR': '🇦🇷', 'ES': '🇪🇸', 'FR': '🇫🇷', 'DE': '🇩🇪', 'IT': '🇮🇹',
+                'JP': '🇯🇵', 'CN': '🇨🇳', 'AU': '🇦🇺', 'IN': '🇮🇳', 'RU': '🇷🇺',
+                'DK': '🇩🇰', 'SE': '🇸🇪', 'NO': '🇳🇴', 'FI': '🇫🇮', 'NL': '🇳🇱',
+                'BE': '🇧🇪', 'CH': '🇨🇭', 'AT': '🇦🇹', 'PT': '🇵🇹', 'GR': '🇬🇷',
+                'IE': '🇮🇪', 'PL': '🇵🇱', 'CZ': '🇨🇿', 'HU': '🇭🇺', 'RO': '🇷🇴',
+                'MY': '🇲🇾', 'SG': '🇸🇬', 'TH': '🇹🇭', 'ID': '🇮🇩', 'PH': '🇵🇭',
+                'VN': '🇻🇳', 'KR': '🇰🇷', 'CO': '🇨🇴', 'PE': '🇵🇪', 'CL': '🇨🇱'
+            };
+            return emojis[codeStr] || '🌍';
+        }
+
+        function getCountryName(code) {
+            if (!code) return 'Desconocido';
+            const codeStr = String(code).toUpperCase();
+            const countries = {
+                'US': 'Estados Unidos', 'CA': 'Canadá', 'GB': 'Reino Unido', 'MX': 'México', 'BR': 'Brasil',
+                'AR': 'Argentina', 'ES': 'España', 'FR': 'Francia', 'DE': 'Alemania', 'IT': 'Italia',
+                'JP': 'Japón', 'CN': 'China', 'AU': 'Australia', 'IN': 'India', 'RU': 'Rusia',
+                'DK': 'Dinamarca', 'SE': 'Suecia', 'NO': 'Noruega', 'FI': 'Finlandia', 'NL': 'Países Bajos',
+                'BE': 'Bélgica', 'CH': 'Suiza', 'AT': 'Austria', 'PT': 'Portugal', 'GR': 'Grecia',
+                'IE': 'Irlanda', 'PL': 'Polonia', 'CZ': 'República Checa', 'HU': 'Hungría', 'RO': 'Rumania',
+                'MY': 'Malasia', 'SG': 'Singapur', 'TH': 'Tailandia', 'ID': 'Indonesia', 'PH': 'Filipinas',
+                'VN': 'Vietnam', 'KR': 'Corea del Sur', 'CO': 'Colombia', 'PE': 'Perú', 'CL': 'Chile'
+            };
+            return countries[codeStr] || code;
+        }
+
+        function showResult(type, message, details, verifyTime = '0.00', binInfo = null) {
+            const results = document.getElementById('results');
+            const resultContent = document.getElementById('result-content');
+            
+            const className = type === 'approved' ? 'result-approved' : 
+                            type === 'declined' ? 'result-declined' : 'result-error';
+            
+            let detailsHtml = '';
+            
+            // Si está aprobada, mostrar información detallada
+            if (type === 'approved' && details.card) {
+                const card = details.card;
+                const brand = (card.brand || 'Unknown').toUpperCase();
+                const cardType = (card.type || 'credit').toUpperCase();
+                const last4 = card.last4 || '****';
+                const country = card.country || 'N/A';
+                
+                // Obtener info del país desde binInfo
+                let countryName = getCountryName(country); // Convertir código a nombre
+                let countryEmoji = getCountryEmoji(country);
+                
+                if (binInfo && binInfo.country) {
+                    // Extraer país desde binInfo (tiene prioridad)
+                    if (typeof binInfo.country === 'object') {
+                        countryName = binInfo.country.name || getCountryName(country);
+                        countryEmoji = binInfo.country.emoji || getCountryEmoji(country);
+                    } else if (typeof binInfo.country === 'string') {
+                        countryName = binInfo.country;
+                    }
+                }
+                
+                detailsHtml += `
+                    <div style="margin-top: 16px; padding: 20px; background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%); border-radius: 12px; border: 2px solid #10b981;">
+                        <div style="font-size: 18px; font-weight: 700; color: #065f46; margin-bottom: 16px; text-align: center;">
+                            ✅ TARJETA VERIFICADA EXITOSAMENTE
+                        </div>
+                        <div style="background: rgba(255,255,255,0.7); padding: 16px; border-radius: 8px; font-size: 13px; color: #065f46;">
+                            <div style="margin-bottom: 10px;">
+                                <strong>🔢 Últimos 4 dígitos:</strong> •••• ${last4}
+                            </div>
+                            <div style="margin-bottom: 10px;">
+                                <strong>💳 Tipo:</strong> ${brand} ${cardType}
+                            </div>
+                            <div style="margin-bottom: 10px;">
+                                <strong>🌍 País:</strong> ${countryName} ${countryEmoji}
+                            </div>
+                            <div style="margin-bottom: 0;">
+                                <strong>⏱️ Tiempo:</strong> ${verifyTime}s
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            if (details.code) {
+                detailsHtml = `<div class="error-details">
+                    <strong>Código de Error:</strong> <span class="error-code">${details.code}</span>
+                </div>` + detailsHtml;
+            }
+            
+            resultContent.innerHTML = `<div class="result-item ${className}">${message}${detailsHtml}</div>`;
+            results.style.display = 'block';
+        }
+        
+        // Cargar configuración al iniciar
+        loadStripeConfig();
+    </script>
+</body>
+</html>
+

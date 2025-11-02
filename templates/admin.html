@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Snoop Dogg Checker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f7fa;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            font-size: 24px;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+
+        .btn-logout {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+
+        .btn-logout:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 30px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .stat-card h3 {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-card .value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .section {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            margin-bottom: 30px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .section-header h2 {
+            color: #333;
+            font-size: 20px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            color: #555;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-group small {
+            color: #999;
+            font-size: 12px;
+            display: block;
+            margin-top: 5px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-success {
+            background: #10b981;
+            color: white;
+        }
+
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+
+        .btn-warning {
+            background: #f59e0b;
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #6b7280;
+            color: white;
+        }
+
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+
+        .keys-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .keys-table th {
+            background: #f8f9fa;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            color: #555;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .keys-table td {
+            padding: 12px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .keys-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .badge-success {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .badge-danger {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .key-display {
+            font-family: 'Courier New', monospace;
+            background: #f3f4f6;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            word-break: break-all;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 5px;
+        }
+
+        .message {
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .message-success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #6ee7b7;
+        }
+
+        .message-error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fca5a5;
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 24px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .toggle-slider {
+            background-color: #10b981;
+        }
+
+        input:checked + .toggle-slider:before {
+            transform: translateX(26px);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 10% auto;
+            padding: 30px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-header h3 {
+            color: #333;
+            font-size: 20px;
+        }
+
+        .close-modal {
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            color: #999;
+            line-height: 1;
+        }
+
+        .close-modal:hover {
+            color: #333;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🔐 Admin Panel - Snoop Dogg Checker Beta</h1>
+        <div class="header-actions">
+            <button onclick="location.reload()" class="btn btn-logout">🔄 Recargar</button>
+            <button onclick="window.location.href='/admin/logout'" class="btn btn-logout">🚪 Cerrar Sesión</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Estadísticas -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h3>Total Keys</h3>
+                <div class="value" id="stat-total-keys">0</div>
+            </div>
+            <div class="stat-card">
+                <h3>Keys Activas</h3>
+                <div class="value" id="stat-active-keys">0</div>
+            </div>
+            <div class="stat-card">
+                <h3>Límite por Día</h3>
+                <div class="value" id="stat-daily-limit">0</div>
+            </div>
+        </div>
+
+        <!-- Configuración General -->
+        <div class="section">
+            <div class="section-header">
+                <h2>⚙️ Configuración General</h2>
+            </div>
+            <div id="config-message" class="message"></div>
+            <form id="config-form">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Contraseña Admin</label>
+                        <input type="password" id="admin-password" placeholder="Nueva contraseña (opcional)">
+                        <small>Déjalo vacío para no cambiar</small>
+                    </div>
+                    <div class="form-group">
+                        <label>Checks por Día (por key)</label>
+                        <input type="number" id="max-checks" min="1" value="50" required>
+                    </div>
+                </div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Stripe Public Key (pk_live_...)</label>
+                        <input type="text" id="stripe-pk" placeholder="pk_live_..." required>
+                    </div>
+                    <div class="form-group">
+                        <label>Stripe Secret Key (sk_live_...)</label>
+                        <input type="password" id="stripe-sk" placeholder="sk_live_..." required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label style="display: flex; align-items: center; gap: 10px;">
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="maintenance-mode">
+                            <span class="toggle-slider"></span>
+                        </label>
+                        Modo Mantenimiento
+                    </label>
+                    <small>Cuando está activo, los usuarios no pueden usar el checker</small>
+                </div>
+                <button type="submit" class="btn btn-primary">💾 Guardar Configuración</button>
+            </form>
+        </div>
+
+        <!-- Gestión de Keys -->
+        <div class="section">
+            <div class="section-header">
+                <h2>🔑 Gestión de Keys</h2>
+                <button onclick="openGenerateKeyModal()" class="btn btn-success">➕ Generar Nueva Key</button>
+            </div>
+            <div id="keys-message" class="message"></div>
+            <table class="keys-table" id="keys-table">
+                <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Key</th>
+                        <th>Estado</th>
+                        <th>Checks Hoy</th>
+                        <th>Último Check</th>
+                        <th>IP / Dispositivo</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="keys-tbody">
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 30px; color: #999;">
+                            Cargando keys...
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Modal para generar key -->
+    <div id="generate-key-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>➕ Generar Nueva Key</h3>
+                <span class="close-modal" onclick="closeGenerateKeyModal()">&times;</span>
+            </div>
+            <form id="generate-key-form">
+                <div class="form-group">
+                    <label>Nombre del Usuario</label>
+                    <input type="text" id="new-key-name" placeholder="Ej: Juan Pérez" required>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">🔑 Generar Key</button>
+            </form>
+            <div id="generated-key-display" style="display: none; margin-top: 20px;">
+                <div style="background: #f0fdf4; padding: 15px; border-radius: 10px; border: 2px solid #10b981;">
+                    <strong style="color: #065f46;">✅ Key Generada:</strong>
+                    <div class="key-display" id="generated-key-text" style="margin-top: 10px;"></div>
+                    <button onclick="copyGeneratedKey()" class="btn btn-success" style="width: 100%; margin-top: 10px;">📋 Copiar Key</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentConfig = {};
+
+        // Cargar configuración al inicio
+        async function loadConfig() {
+            try {
+                const response = await fetch('/admin/get_config');
+                const data = await response.json();
+                
+                currentConfig = data.config;
+                
+                // Llenar formulario
+                document.getElementById('stripe-pk').value = currentConfig.stripe_pk || '';
+                document.getElementById('stripe-sk').value = currentConfig.stripe_sk || '';
+                document.getElementById('max-checks').value = currentConfig.max_checks_per_day || 50;
+                document.getElementById('maintenance-mode').checked = currentConfig.maintenance_mode || false;
+                
+                // Actualizar estadísticas
+                document.getElementById('stat-total-keys').textContent = data.stats.total_keys;
+                document.getElementById('stat-active-keys').textContent = data.stats.active_keys;
+                document.getElementById('stat-daily-limit').textContent = currentConfig.max_checks_per_day;
+            } catch (error) {
+                console.error('Error cargando configuración:', error);
+            }
+        }
+
+        // Guardar configuración
+        document.getElementById('config-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const configData = {
+                stripe_pk: document.getElementById('stripe-pk').value,
+                stripe_sk: document.getElementById('stripe-sk').value,
+                max_checks_per_day: parseInt(document.getElementById('max-checks').value),
+                maintenance_mode: document.getElementById('maintenance-mode').checked
+            };
+
+            const adminPassword = document.getElementById('admin-password').value;
+            if (adminPassword) {
+                configData.admin_password = adminPassword;
+            }
+
+            try {
+                const response = await fetch('/admin/update_config', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(configData)
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    showMessage('config-message', '✅ Configuración guardada exitosamente', 'success');
+                    document.getElementById('admin-password').value = '';
+                    await loadConfig();
+                } else {
+                    showMessage('config-message', '❌ Error: ' + (data.error || 'Desconocido'), 'error');
+                }
+            } catch (error) {
+                showMessage('config-message', '❌ Error de conexión', 'error');
+            }
+        });
+
+        // Cargar keys
+        async function loadKeys() {
+            try {
+                const response = await fetch('/admin/get_keys');
+                const data = await response.json();
+                
+                const tbody = document.getElementById('keys-tbody');
+                
+                if (data.keys.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 30px; color: #999;">No hay keys generadas</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = data.keys.map(key => `
+                    <tr>
+                        <td><strong>${key.name}</strong></td>
+                        <td><div class="key-display">${key.key.substring(0, 30)}...</div></td>
+                        <td>
+                            <span class="badge ${key.active ? 'badge-success' : 'badge-danger'}">
+                                ${key.active ? 'Activa' : 'Desactivada'}
+                            </span>
+                        </td>
+                        <td>${key.checks_today} / ${currentConfig.max_checks_per_day}</td>
+                        <td>${key.last_check_date || 'Nunca'}</td>
+                        <td>
+                            <small>${key.last_ip || 'N/A'}</small><br>
+                            <small style="color: #999;">${key.device_fingerprint === 'No registrado' ? 'Sin dispositivo' : 'Registrado'}</small>
+                        </td>
+                        <td>
+                            <div class="action-buttons">
+                                <button onclick="toggleKey('${key.key}')" class="btn btn-small ${key.active ? 'btn-warning' : 'btn-success'}">
+                                    ${key.active ? '⏸️' : '▶️'}
+                                </button>
+                                <button onclick="resetDevice('${key.key}')" class="btn btn-small btn-secondary" title="Resetear dispositivo">
+                                    🔄
+                                </button>
+                                <button onclick="deleteKey('${key.key}')" class="btn btn-small btn-danger">
+                                    🗑️
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                console.error('Error cargando keys:', error);
+            }
+        }
+
+        // Generar nueva key
+        function openGenerateKeyModal() {
+            document.getElementById('generate-key-modal').style.display = 'block';
+            document.getElementById('generated-key-display').style.display = 'none';
+            document.getElementById('generate-key-form').reset();
+        }
+
+        function closeGenerateKeyModal() {
+            document.getElementById('generate-key-modal').style.display = 'none';
+        }
+
+        document.getElementById('generate-key-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const name = document.getElementById('new-key-name').value;
+
+            try {
+                const response = await fetch('/admin/generate_key', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: name })
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById('generated-key-text').textContent = data.key;
+                    document.getElementById('generated-key-display').style.display = 'block';
+                    document.getElementById('generate-key-form').style.display = 'none';
+                    await loadKeys();
+                    await loadConfig();
+                } else {
+                    alert('Error: ' + (data.error || 'Desconocido'));
+                }
+            } catch (error) {
+                alert('Error de conexión');
+            }
+        });
+
+        function copyGeneratedKey() {
+            const keyText = document.getElementById('generated-key-text').textContent;
+            navigator.clipboard.writeText(keyText);
+            alert('✅ Key copiada al portapapeles!');
+        }
+
+        // Toggle key
+        async function toggleKey(key) {
+            try {
+                const response = await fetch('/admin/toggle_key', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ key: key })
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    showMessage('keys-message', `✅ Key ${data.active ? 'activada' : 'desactivada'}`, 'success');
+                    await loadKeys();
+                }
+            } catch (error) {
+                showMessage('keys-message', '❌ Error al cambiar estado', 'error');
+            }
+        }
+
+        // Resetear dispositivo
+        async function resetDevice(key) {
+            if (!confirm('¿Resetear el dispositivo vinculado a esta key?')) return;
+
+            try {
+                const response = await fetch('/admin/reset_key_device', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ key: key })
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    showMessage('keys-message', '✅ Dispositivo reseteado', 'success');
+                    await loadKeys();
+                }
+            } catch (error) {
+                showMessage('keys-message', '❌ Error al resetear dispositivo', 'error');
+            }
+        }
+
+        // Eliminar key
+        async function deleteKey(key) {
+            if (!confirm('¿Estás seguro de eliminar esta key? Esta acción no se puede deshacer.')) return;
+
+            try {
+                const response = await fetch('/admin/delete_key', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ key: key })
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    showMessage('keys-message', '✅ Key eliminada', 'success');
+                    await loadKeys();
+                    await loadConfig();
+                }
+            } catch (error) {
+                showMessage('keys-message', '❌ Error al eliminar key', 'error');
+            }
+        }
+
+        // Mostrar mensaje
+        function showMessage(elementId, text, type) {
+            const msgElement = document.getElementById(elementId);
+            msgElement.className = `message message-${type}`;
+            msgElement.textContent = text;
+            msgElement.style.display = 'block';
+            
+            setTimeout(() => {
+                msgElement.style.display = 'none';
+            }, 5000);
+        }
+
+        // Cerrar modal al hacer clic fuera
+        window.onclick = function(event) {
+            const modal = document.getElementById('generate-key-modal');
+            if (event.target == modal) {
+                closeGenerateKeyModal();
+            }
+        }
+
+        // Cargar todo al iniciar
+        loadConfig();
+        loadKeys();
+
+        // Recargar keys cada 30 segundos
+        setInterval(loadKeys, 30000);
+    </script>
+</body>
+</html>
+
