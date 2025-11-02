@@ -1,0 +1,35 @@
+╔══════════════════════════════════════════════════════════════╗
+║  🔧 SOLUCIÓN ERROR DE DEPLOY EN RENDER                       ║
+╚══════════════════════════════════════════════════════════════╝
+
+📋 PROBLEMA:
+   - Render está usando Python 3.13.4 (incompatible con SQLAlchemy)
+   - Necesitas forzar Python 3.11.9
+
+✅ SOLUCIÓN APLICADA:
+   - Actualizado runtime.txt a python-3.11.9
+
+📤 SUBIR CAMBIOS A GITHUB:
+
+1️⃣  Agregar el archivo actualizado:
+   git add runtime.txt
+   
+2️⃣  Hacer commit:
+   git commit -m "Fix: Cambiar a Python 3.11.9 para compatibilidad con SQLAlchemy"
+   
+3️⃣  Subir a GitHub:
+   git push origin main
+
+🔄 RENDER SE ACTUALIZARÁ AUTOMÁTICAMENTE:
+   - Render detectará el cambio
+   - Hará un nuevo deploy con Python 3.11.9
+   - El error de SQLAlchemy desaparecerá
+
+⏱️ Tiempo estimado: 3-5 minutos
+
+═══════════════════════════════════════════════════════════════
+
+💡 Nota: Si Render sigue usando Python 3.13, verifica en el 
+   dashboard de Render que esté leyendo correctamente el archivo
+   runtime.txt desde la raíz del repositorio.
+
