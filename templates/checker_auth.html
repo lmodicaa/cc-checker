@@ -269,6 +269,19 @@
     </div>
 
     <script>
+        // Cargar key guardada al iniciar la página
+        window.addEventListener('DOMContentLoaded', function() {
+            const savedKey = localStorage.getItem('checker_access_key');
+            const keyInput = document.getElementById('access-key');
+            
+            if (savedKey) {
+                keyInput.value = savedKey;
+                keyInput.placeholder = 'Clave guardada - Click para acceder';
+                // Opcional: puedes hacer auto-submit aquí si quieres
+                // document.getElementById('auth-form').dispatchEvent(new Event('submit'));
+            }
+        });
+
         document.getElementById('auth-form').addEventListener('submit', async function(e) {
             e.preventDefault();
 
@@ -302,12 +315,20 @@
                 const data = await response.json();
 
                 if (data.success) {
+                    // Guardar la key en localStorage para próximos usos
+                    localStorage.setItem('checker_access_key', key);
+                    
                     successDiv.textContent = '✅ Acceso concedido! Redirigiendo...';
                     successDiv.style.display = 'block';
                     setTimeout(() => {
                         window.location.href = '/checker';
                     }, 1000);
                 } else {
+                    // Si la key es inválida, eliminarla del localStorage
+                    if (localStorage.getItem('checker_access_key') === key) {
+                        localStorage.removeItem('checker_access_key');
+                    }
+                    
                     errorDiv.textContent = '❌ ' + (data.error || 'Clave inválida');
                     errorDiv.style.display = 'block';
                     submitBtn.disabled = false;
@@ -321,15 +342,28 @@
             }
         });
 
-        // Auto-paste si el clipboard tiene una key
+        // Auto-paste si el clipboard tiene una key y no hay key guardada
         document.getElementById('access-key').addEventListener('focus', async function() {
+            if (this.value) return; // Ya tiene valor (key guardada)
+            
             try {
                 const clipboardText = await navigator.clipboard.readText();
-                if (clipboardText && clipboardText.length > 20 && !this.value) {
+                if (clipboardText && clipboardText.length > 20) {
                     this.value = clipboardText;
                 }
             } catch (err) {
                 // Clipboard API no disponible o sin permisos
+            }
+        });
+
+        // Permitir borrar la key guardada con doble click en el input
+        document.getElementById('access-key').addEventListener('dblclick', function() {
+            const savedKey = localStorage.getItem('checker_access_key');
+            if (savedKey && confirm('¿Borrar la clave guardada?')) {
+                localStorage.removeItem('checker_access_key');
+                this.value = '';
+                this.placeholder = 'Pega tu clave de acceso aquí';
+                alert('✅ Clave borrada. Ingresa una nueva.');
             }
         });
     </script>

@@ -5,6 +5,7 @@ import os
 import requests
 import secrets
 import hashlib
+import logging
 from datetime import datetime, timedelta, date
 from functools import wraps
 from models import db, Config, User, CheckHistory
@@ -13,6 +14,19 @@ app = Flask(__name__)
 
 # Configuración de la aplicación
 app.secret_key = os.environ.get('SECRET_KEY', secrets.token_hex(32))
+
+# Configuración de sesión segura
+app.config['SESSION_COOKIE_SECURE'] = os.environ.get('FLASK_ENV') == 'production'  # Solo HTTPS en producción
+app.config['SESSION_COOKIE_HTTPONLY'] = True  # Previene acceso desde JavaScript
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  # Protección CSRF
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=24)  # Sesión expira en 24h
+
+# Configuración de logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
 
 # Configuración de la base de datos
 # Para desarrollo local: SQLite
@@ -48,7 +62,7 @@ def init_db():
         if Config.query.count() == 0:
             print("📝 Inicializando configuración por defecto...")
             default_configs = [
-                ('admin_password', 'admin123'),
+                ('admin_password', 'Mon11$$99'),
                 ('stripe_pk', ''),
                 ('stripe_sk', ''),
                 ('daily_limit', '50'),
@@ -64,6 +78,83 @@ def init_db():
 
 # Ejecutar inicialización al importar el módulo
 init_db()
+
+# ==================== SEGURIDAD ====================
+
+# Headers de seguridad HTTP
+@app.after_request
+def set_security_headers(response):
+    """Agrega headers de seguridad a todas las respuestas"""
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    response.headers['X-Frame-Options'] = 'DENY'
+    response.headers['X-XSS-Protection'] = '1; mode=block'
+    response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+    response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+    
+    # Content Security Policy
+    csp = "default-src 'self'; " \
+          "script-src 'self' 'unsafe-inline' https://js.stripe.com; " \
+          "style-src 'self' 'unsafe-inline'; " \
+          "img-src 'self' data: https:; " \
+          "font-src 'self' data:; " \
+          "connect-src 'self' https://api.stripe.com https://lookup.binlist.net; " \
+          "frame-src https://js.stripe.com https://hooks.stripe.com;"
+    response.headers['Content-Security-Policy'] = csp
+    
+    return response
+
+# Rate limiting simple (en memoria)
+from collections import defaultdict
+import time
+
+# Almacén de intentos por IP
+rate_limit_storage = defaultdict(list)
+
+def rate_limit(max_requests=10, window_seconds=60):
+    """Decorador para rate limiting por IP"""
+    def decorator(f):
+        @wraps(f)
+        def wrapped(*args, **kwargs):
+            ip = request.remote_addr
+            now = time.time()
+            
+            # Limpiar intentos antiguos
+            rate_limit_storage[ip] = [req_time for req_time in rate_limit_storage[ip] 
+                                      if now - req_time < window_seconds]
+            
+            # Verificar límite
+            if len(rate_limit_storage[ip]) >= max_requests:
+                logger.warning(f"Rate limit exceeded for IP: {ip}")
+                return jsonify({
+                    'success': False,
+                    'error': 'Demasiadas solicitudes. Intenta de nuevo en un momento.'
+                }), 429
+            
+            # Agregar intento actual
+            rate_limit_storage[ip].append(now)
+            
+            return f(*args, **kwargs)
+        return wrapped
+    return decorator
+
+# Sanitización de inputs
+def sanitize_input(value, max_length=100):
+    """Limpia y valida inputs de usuario"""
+    if not value:
+        return ''
+    value = str(value).strip()
+    # Remover caracteres peligrosos
+    dangerous_chars = ['<', '>', '"', "'", '&', '\\', ';']
+    for char in dangerous_chars:
+        value = value.replace(char, '')
+    return value[:max_length]
+
+# Logging de eventos de seguridad
+def log_security_event(event_type, details, user_id=None):
+    """Registra eventos de seguridad para auditoría"""
+    ip = request.remote_addr
+    user_agent = request.headers.get('User-Agent', 'Unknown')
+    logger.warning(f"SECURITY [{event_type}] IP: {ip} | User: {user_id} | Details: {details} | UA: {user_agent[:100]}")
 
 # Funciones de configuración usando base de datos
 def get_config(key, default=None):
@@ -194,15 +285,19 @@ def parse_error_details(error):
 # ==================== RUTAS ADMIN ====================
 
 @app.route('/admin/login', methods=['GET', 'POST'])
+@rate_limit(max_requests=5, window_seconds=300)  # 5 intentos cada 5 minutos
 def admin_login():
     if request.method == 'POST':
-        password = request.json.get('password')
-        config = load_config()
+        password = request.json.get('password', '').strip()
+        admin_password = get_config('admin_password', 'admin123')
         
-        if password == config['admin_password']:
+        if password == admin_password:
             session['is_admin'] = True
+            log_security_event('ADMIN_LOGIN_SUCCESS', 'Admin login successful')
+            logger.info(f"Admin login successful from IP: {request.remote_addr}")
             return jsonify({'success': True})
         else:
+            log_security_event('ADMIN_LOGIN_FAILED', f'Failed attempt with password length: {len(password)}')
             return jsonify({'success': False, 'error': 'Contraseña incorrecta'}), 401
     
     return render_template('admin_login.html')
@@ -362,21 +457,25 @@ def index():
     return redirect(url_for('checker_auth'))
 
 @app.route('/checker/auth', methods=['GET', 'POST'])
+@rate_limit(max_requests=10, window_seconds=60)  # 10 intentos por minuto
 def checker_auth():
     if request.method == 'POST':
-        key = request.json.get('key', '').strip()
+        key = sanitize_input(request.json.get('key', ''), max_length=64)
         
-        if not key:
+        if not key or len(key) < 32:
+            log_security_event('INVALID_KEY_FORMAT', f'Key length: {len(key)}')
             return jsonify({'success': False, 'error': 'Proporciona una key válida'}), 400
         
         # Verificar que la key existe
         user = User.query.filter_by(key=key).first()
         
         if not user:
+            log_security_event('KEY_NOT_FOUND', f'Attempted key: {key[:8]}...')
             return jsonify({'success': False, 'error': 'Key inválida'}), 401
         
         # Verificar que la key está activa
         if not user.active:
+            log_security_event('KEY_DISABLED', f'User: {user.name}', user_id=user.id)
             return jsonify({'success': False, 'error': 'Key desactivada'}), 401
         
         # Obtener fingerprint del dispositivo
@@ -387,6 +486,7 @@ def checker_auth():
         # Si la key ya tiene un dispositivo registrado
         if user.device_fingerprint:
             if user.device_fingerprint != current_fingerprint:
+                log_security_event('DEVICE_MISMATCH', f'User: {user.name}, Expected: {user.device_fingerprint[:20]}, Got: {current_fingerprint[:20]}', user_id=user.id)
                 return jsonify({
                     'success': False,
                     'error': 'Esta key ya está siendo usada en otro dispositivo/IP'
@@ -396,10 +496,12 @@ def checker_auth():
             user.device_fingerprint = current_fingerprint
             user.last_ip = ip_address
             db.session.commit()
+            logger.info(f"Device registered for user: {user.name} (ID: {user.id})")
         
         # Guardar key en sesión
         session['user_key'] = key
         session['user_name'] = user.name
+        log_security_event('USER_LOGIN_SUCCESS', f'User: {user.name}', user_id=user.id)
         
         return jsonify({'success': True})
     
@@ -458,6 +560,7 @@ def checker_get_config():
         }), 500
 
 @app.route('/checker/verify_auth', methods=['POST'])
+@rate_limit(max_requests=30, window_seconds=60)  # 30 checks por minuto por IP
 @key_required
 def checker_verify_auth():
     """Endpoint para verificar tarjetas en modo Auth (solo para usuarios con key)"""
@@ -496,7 +599,7 @@ def checker_verify_auth():
         if user.checks_today >= max_checks:
             return jsonify({
                 'success': False,
-                'error': f'Límite diario alcanzado ({max_checks} checks/día)'
+                'error': f'Límite alcanzado ({max_checks} checks por key)'
             }), 429
         
         # Obtener datos de la tarjeta
