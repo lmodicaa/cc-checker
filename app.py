@@ -507,6 +507,28 @@ def checker_auth():
         ip_address = request.remote_addr
         current_fingerprint = get_device_fingerprint(user_agent, ip_address)
         
+        # Verificar si este dispositivo ya está vinculado a otra key activa con checks disponibles
+        existing_user = User.query.filter(
+            User.device_fingerprint == current_fingerprint,
+            User.key != key,
+            User.active == True
+        ).first()
+        
+        if existing_user:
+            # Verificar si la key existente tiene checks disponibles
+            today = date.today()
+            if existing_user.last_check_date == today:
+                checks_remaining = existing_user.max_checks - existing_user.checks_today
+            else:
+                checks_remaining = existing_user.max_checks
+            
+            if checks_remaining > 0:
+                log_security_event('DEVICE_ALREADY_LINKED', f'Device linked to: {existing_user.name}, has {checks_remaining} checks remaining')
+                return jsonify({
+                    'success': False,
+                    'error': f'Tu dispositivo ya está vinculado a otra key activa con {checks_remaining} checks disponibles. Usa esa key o contacta al administrador.'
+                }), 403
+        
         # Si la key ya tiene un dispositivo registrado
         if user.device_fingerprint:
             if user.device_fingerprint != current_fingerprint:
@@ -623,7 +645,7 @@ def checker_verify_auth():
         if user.checks_today >= user.max_checks:
             return jsonify({
                 'success': False,
-                'error': f'Límite alcanzado ({user.max_checks} checks por key)'
+                'error': f'Has alcanzado el límite de {user.max_checks} checks. Contacta al administrador para obtener una nueva key o aumentar tu límite.'
             }), 429
         
         # Obtener datos de la tarjeta
