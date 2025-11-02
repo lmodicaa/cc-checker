@@ -354,8 +354,6 @@ def update_config():
 @admin_required
 def get_keys():
     users = User.query.all()
-    config = load_config()
-    max_checks = config.get('max_checks_per_day', 20)
     
     # Formatear keys para el frontend
     keys_list = []
@@ -366,6 +364,7 @@ def get_keys():
             'active': user.active,
             'created_at': user.created_at.strftime('%Y-%m-%d %H:%M:%S') if user.created_at else '',
             'checks_today': user.checks_today,
+            'max_checks': user.max_checks,  # Límite personalizado de cada key
             'last_check_date': user.last_check_date.strftime('%Y-%m-%d') if user.last_check_date else '',
             'device_fingerprint': user.device_fingerprint or 'No registrado',
             'last_ip': user.last_ip or 'N/A'
@@ -378,6 +377,14 @@ def get_keys():
 def generate_key():
     data = request.json
     name = data.get('name', 'Usuario')
+    max_checks = int(data.get('max_checks', 50))  # Límite personalizado o 50 por defecto
+    
+    # Validar límite
+    if max_checks < 1 or max_checks > 10000:
+        return jsonify({
+            'success': False,
+            'error': 'El límite debe estar entre 1 y 10000'
+        }), 400
     
     # Generar key única
     new_key = secrets.token_urlsafe(32)
@@ -390,6 +397,7 @@ def generate_key():
         created_at=datetime.now(),
         checks_today=0,
         last_check_date=None,
+        max_checks=max_checks,
         device_fingerprint=None,
         last_ip=None
     )
@@ -400,7 +408,8 @@ def generate_key():
     return jsonify({
         'success': True,
         'key': new_key,
-        'name': name
+        'name': name,
+        'max_checks': max_checks
     })
 
 @app.route('/admin/toggle_key', methods=['POST'])
@@ -538,20 +547,20 @@ def checker_get_config():
         if not user:
             return jsonify({'success': False, 'error': 'Usuario no encontrado'}), 404
         
-        # Calcular checks restantes
+        # Calcular checks restantes usando el límite personalizado del usuario
         today = date.today()
         if user.last_check_date != today:
             checks_today = 0
         else:
             checks_today = user.checks_today
         
-        max_checks = get_config('max_checks_per_day', 20)
-        checks_remaining = max_checks - checks_today
+        checks_remaining = user.max_checks - checks_today
         
         return jsonify({
             'success': True,
             'stripe_pk': get_config('stripe_pk', ''),
-            'checks_remaining': checks_remaining
+            'checks_remaining': checks_remaining,
+            'max_checks': user.max_checks
         })
     except Exception as e:
         return jsonify({
@@ -595,11 +604,11 @@ def checker_verify_auth():
             user.last_check_date = today
             db.session.commit()
         
-        max_checks = config['max_checks_per_day']
-        if user.checks_today >= max_checks:
+        # Usar el límite personalizado de cada usuario
+        if user.checks_today >= user.max_checks:
             return jsonify({
                 'success': False,
-                'error': f'Límite alcanzado ({max_checks} checks por key)'
+                'error': f'Límite alcanzado ({user.max_checks} checks por key)'
             }), 429
         
         # Obtener datos de la tarjeta
@@ -734,7 +743,7 @@ def checker_verify_auth():
                     'message': 'Tarjeta válida (Auth) ✅',
                     'status': 'approved',
                     'mode': 'auth',
-                    'checks_remaining': max_checks - user.checks_today,
+                    'checks_remaining': user.max_checks - user.checks_today,
                     'details': {
                         'setup_intent_id': setup_intent.id,
                         'status': setup_intent.status,
@@ -767,7 +776,7 @@ def checker_verify_auth():
                     'message': 'Tarjeta válida (Auth) ✅ - Requiere 3D Secure',
                     'status': 'approved',
                     'mode': 'auth',
-                    'checks_remaining': max_checks - user.checks_today,
+                    'checks_remaining': user.max_checks - user.checks_today,
                     'details': {
                         'setup_intent_id': setup_intent.id,
                         'status': setup_intent.status,
@@ -815,7 +824,7 @@ def checker_verify_auth():
                 'error': error_details['message'],
                 'status': 'declined',
                 'mode': 'auth',
-                'checks_remaining': max_checks - user.checks_today,
+                'checks_remaining': user.max_checks - user.checks_today,
                 'details': error_details
             })
         

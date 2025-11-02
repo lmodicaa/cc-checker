@@ -26,6 +26,7 @@ class User(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     checks_today = db.Column(db.Integer, default=0, nullable=False)
     last_check_date = db.Column(db.Date, nullable=True)
+    max_checks = db.Column(db.Integer, default=50, nullable=False)  # Límite personalizado por key
     device_fingerprint = db.Column(db.String(255), nullable=True)
     last_ip = db.Column(db.String(45), nullable=True)
     

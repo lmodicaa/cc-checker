@@ -451,6 +451,7 @@
                         <th>Key</th>
                         <th>Estado</th>
                         <th>Checks Hoy</th>
+                        <th>Límite</th>
                         <th>Último Check</th>
                         <th>IP / Dispositivo</th>
                         <th>Acciones</th>
@@ -458,7 +459,7 @@
                 </thead>
                 <tbody id="keys-tbody">
                     <tr>
-                        <td colspan="7" style="text-align: center; padding: 30px; color: #999;">
+                        <td colspan="8" style="text-align: center; padding: 30px; color: #999;">
                             Cargando keys...
                         </td>
                     </tr>
@@ -478,6 +479,11 @@
                 <div class="form-group">
                     <label>Nombre del Usuario</label>
                     <input type="text" id="new-key-name" placeholder="Ej: Juan Pérez" required>
+                </div>
+                <div class="form-group">
+                    <label>Límite de Checks (por key)</label>
+                    <input type="number" id="new-key-limit" min="1" max="10000" value="50" required>
+                    <small>Cuántos checks puede hacer esta key (por día)</small>
                 </div>
                 <button type="submit" class="btn btn-primary" style="width: 100%;">🔑 Generar Key</button>
             </form>
@@ -563,7 +569,7 @@
                 const tbody = document.getElementById('keys-tbody');
                 
                 if (data.keys.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 30px; color: #999;">No hay keys generadas</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 30px; color: #999;">No hay keys generadas</td></tr>';
                     return;
                 }
 
@@ -576,7 +582,8 @@
                                 ${key.active ? 'Activa' : 'Desactivada'}
                             </span>
                         </td>
-                        <td>${key.checks_today} / ${currentConfig.max_checks_per_day}</td>
+                        <td>${key.checks_today} / ${key.max_checks}</td>
+                        <td><strong>${key.max_checks}</strong></td>
                         <td>${key.last_check_date || 'Nunca'}</td>
                         <td>
                             <small>${key.last_ip || 'N/A'}</small><br>
@@ -617,12 +624,13 @@
             e.preventDefault();
             
             const name = document.getElementById('new-key-name').value;
+            const maxChecks = parseInt(document.getElementById('new-key-limit').value);
 
             try {
                 const response = await fetch('/admin/generate_key', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name: name })
+                    body: JSON.stringify({ name: name, max_checks: maxChecks })
                 });
 
                 const data = await response.json();
