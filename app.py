@@ -118,19 +118,36 @@ def set_security_headers(response):
     
     return response
 
-# Rate limiting simple (en memoria)
+# Rate limiting mejorado (compatible con Cloudflare/proxies)
 from collections import defaultdict
 import time
 
 # Almacén de intentos por IP
 rate_limit_storage = defaultdict(list)
 
+def get_real_ip():
+    """Obtiene la IP real del usuario considerando proxies y Cloudflare"""
+    # Cloudflare pone la IP real en CF-Connecting-IP
+    if request.headers.get('CF-Connecting-IP'):
+        return request.headers.get('CF-Connecting-IP')
+    
+    # Otros proxies usan X-Forwarded-For (primera IP es la real)
+    if request.headers.get('X-Forwarded-For'):
+        return request.headers.get('X-Forwarded-For').split(',')[0].strip()
+    
+    # X-Real-IP es usado por Nginx y otros
+    if request.headers.get('X-Real-IP'):
+        return request.headers.get('X-Real-IP')
+    
+    # Fallback a remote_addr
+    return request.remote_addr
+
 def rate_limit(max_requests=10, window_seconds=60):
-    """Decorador para rate limiting por IP"""
+    """Decorador para rate limiting por IP real (compatible con Cloudflare)"""
     def decorator(f):
         @wraps(f)
         def wrapped(*args, **kwargs):
-            ip = request.remote_addr
+            ip = get_real_ip()
             now = time.time()
             
             # Limpiar intentos antiguos
@@ -167,7 +184,7 @@ def sanitize_input(value, max_length=100):
 # Logging de eventos de seguridad
 def log_security_event(event_type, details, user_id=None):
     """Registra eventos de seguridad para auditoría"""
-    ip = request.remote_addr
+    ip = get_real_ip()
     user_agent = request.headers.get('User-Agent', 'Unknown')
     logger.warning(f"SECURITY [{event_type}] IP: {ip} | User: {user_id} | Details: {details} | UA: {user_agent[:100]}")
 
@@ -309,7 +326,7 @@ def admin_login():
         if password == admin_password:
             session['is_admin'] = True
             log_security_event('ADMIN_LOGIN_SUCCESS', 'Admin login successful')
-            logger.info(f"Admin login successful from IP: {request.remote_addr}")
+            logger.info(f"Admin login successful from IP: {get_real_ip()}")
             return jsonify({'success': True})
         else:
             log_security_event('ADMIN_LOGIN_FAILED', f'Failed attempt with password length: {len(password)}')
@@ -481,7 +498,7 @@ def index():
     return redirect(url_for('checker_auth'))
 
 @app.route('/checker/auth', methods=['GET', 'POST'])
-@rate_limit(max_requests=10, window_seconds=60)  # 10 intentos por minuto
+@rate_limit(max_requests=30, window_seconds=60)  # 30 intentos por minuto
 def checker_auth():
     if request.method == 'POST':
         key = sanitize_input(request.json.get('key', ''), max_length=64)
@@ -504,7 +521,7 @@ def checker_auth():
         
         # Obtener fingerprint del dispositivo
         user_agent = request.headers.get('User-Agent', '')
-        ip_address = request.remote_addr
+        ip_address = get_real_ip()
         current_fingerprint = get_device_fingerprint(user_agent, ip_address)
         
         # Verificar si este dispositivo ya está vinculado a otra key activa con checks disponibles
@@ -542,7 +559,7 @@ def checker_auth():
                 log_security_event('DEVICE_MISMATCH', f'User: {user.name}, Expected: {user.device_fingerprint[:20]}, Got: {current_fingerprint[:20]}', user_id=user.id)
                 return jsonify({
                     'success': False,
-                    'error': 'Esta key ya está siendo usada en otro dispositivo/IP'
+                    'error': 'Esta key ya está vinculada a otro dispositivo/navegador. Si cambiaste de dispositivo o navegador, contacta al administrador para desvincular tu key.'
                 }), 403
         else:
             # Registrar dispositivo
@@ -613,7 +630,7 @@ def checker_get_config():
         }), 500
 
 @app.route('/checker/verify_auth', methods=['POST'])
-@rate_limit(max_requests=30, window_seconds=60)  # 30 checks por minuto por IP
+@rate_limit(max_requests=60, window_seconds=60)  # 60 checks por minuto por IP
 @key_required
 def checker_verify_auth():
     """Endpoint para verificar tarjetas en modo Auth (solo para usuarios con key)"""

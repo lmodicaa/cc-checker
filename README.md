@@ -31,7 +31,7 @@ Sistema de verificación de tarjetas de crédito usando Stripe API.
    - **Name**: `snoop-dogg-checker` (o el que prefieras)
    - **Environment**: `Python 3`
    - **Build Command**: `pip install -r requirements.txt`
-   - **Start Command**: `gunicorn beta_app:app --bind 0.0.0.0:$PORT`
+   - **Start Command**: `gunicorn app:app --bind 0.0.0.0:$PORT`
    - **Plan**: Free (o el que prefieras)
 
 4. **Agregar PostgreSQL Database**:
@@ -72,8 +72,8 @@ Sistema de verificación de tarjetas de crédito usando Stripe API.
 ## 📁 Estructura del Proyecto
 
 ```
-cc-checker/
-├── beta_app.py          # Aplicación principal Flask
+snoop-dogg-checker/
+├── app.py               # Aplicación principal Flask
 ├── models.py            # Modelos de base de datos (SQLAlchemy)
 ├── requirements.txt     # Dependencias Python
 ├── Procfile             # Comando de inicio para Render
@@ -83,7 +83,8 @@ cc-checker/
     ├── admin_login.html
     ├── admin.html
     ├── checker_auth.html
-    └── checker.html
+    ├── checker.html
+    └── maintenance.html
 ```
 
 ## 🔐 Seguridad
