@@ -58,6 +58,21 @@ def init_db():
         db.create_all()
         print("✅ Base de datos inicializada")
         
+        # Migración: Agregar columna max_checks si no existe (PostgreSQL)
+        try:
+            from sqlalchemy import text
+            inspector = db.inspect(db.engine)
+            columns = [col['name'] for col in inspector.get_columns('users')]
+            
+            if 'max_checks' not in columns:
+                print("📝 Migrando BD: Agregando columna max_checks...")
+                with db.engine.connect() as conn:
+                    conn.execute(text('ALTER TABLE users ADD COLUMN max_checks INTEGER DEFAULT 50 NOT NULL'))
+                    conn.commit()
+                print("✅ Columna max_checks agregada exitosamente")
+        except Exception as e:
+            print(f"⚠️ Error en migración (puede ser normal si es SQLite): {e}")
+        
         # Inicializar configuración por defecto si no existe
         if Config.query.count() == 0:
             print("📝 Inicializando configuración por defecto...")
