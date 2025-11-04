@@ -33,6 +33,32 @@
             100% { background-position: 0% 50%; }
         }
         
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes slideUpModal {
+            from {
+                opacity: 0;
+                transform: translateY(30px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        
         .container {
             max-width: 520px;
             width: 100%;
@@ -163,6 +189,43 @@
             padding-left: 4px;
         }
         
+        #gate-selector {
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23667eea' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 18px center;
+            padding-right: 45px;
+        }
+        
+        #gate-selector:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+        }
+        
+        #gate-selector:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            background-color: #f7fafc;
+        }
+        
+        #verify-button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5);
+        }
+        
+        #verify-button:active:not(:disabled) {
+            transform: translateY(0);
+        }
+        
+        #verify-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
         button {
             width: 100%;
             padding: 18px 24px;
@@ -206,6 +269,43 @@
         
         button:disabled {
             opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        /* Estilos específicos para botones de gate */
+        .gate-btn {
+            width: auto !important;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .gate-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+        
+        .gate-btn:hover:not(:disabled) {
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+        }
+        
+        .gate-btn:hover:not(:disabled)::before {
+            left: 100%;
+        }
+        
+        .gate-btn:active:not(:disabled) {
+            transform: translateY(0) scale(1);
+        }
+        
+        .gate-btn:disabled {
+            opacity: 0.5;
             cursor: not-allowed;
             transform: none;
         }
@@ -351,17 +451,6 @@
             transform: translateY(0);
         }
         
-        .mode-badge {
-            display: inline-block;
-            background: rgba(16, 185, 129, 0.1);
-            color: #065f46;
-            padding: 6px 12px;
-            border-radius: 8px;
-            font-size: 12px;
-            font-weight: 600;
-            border: 1px solid rgba(16, 185, 129, 0.2);
-        }
-        
         @media (max-width: 640px) {
             .container {
                 padding: 32px 24px;
@@ -396,19 +485,46 @@
         </div>
         
         <div style="text-align: center; margin-bottom: 24px;">
-            <span class="mode-badge">✅ Modo: Auth (Sin Cargo)</span>
             <div id="stripe-status" style="margin-top: 10px; padding: 8px; border-radius: 8px; font-size: 12px; font-weight: 600;">
                 <span style="color: #f59e0b;">⏳ Cargando Stripe...</span>
             </div>
         </div>
         
-        <div class="form-group">
-            <label>Información de la Tarjeta</label>
-            <div id="card-element"></div>
-            <div id="card-errors" role="alert"></div>
+        <!-- Selector de Gate y Botón de Verificación -->
+        <div class="form-group" style="margin-top: 24px;">
+            <label>Seleccionar Gate</label>
+            <select id="gate-selector" style="width: 100%; padding: 18px; border: 2px solid #e2e8f0; border-radius: 12px; background: white; font-size: 16px; font-weight: 600; color: #1a202c; cursor: pointer; transition: all 0.3s;">
+                <option value="">Selecciona un gate...</option>
+            </select>
+            <div id="gate-selector-error" style="color: #ef4444; margin-top: 8px; font-size: 13px; display: none;"></div>
         </div>
         
-        <button id="submit-btn" onclick="verifyCard()">🔍 Verificar Tarjeta (Auth)</button>
+        <!-- Campos de Tarjeta (ocultos inicialmente) -->
+        <div id="card-fields-container" style="visibility: hidden; height: 0; overflow: hidden; transition: none;">
+            <div class="form-group" id="stripe-card-field" style="display: none;">
+                <label>Información de la Tarjeta</label>
+                <div id="card-element"></div>
+                <div id="card-errors" role="alert"></div>
+            </div>
+            
+            <!-- Campos para Braintree y Charge -->
+            <div class="form-group" id="braintree-card-fields" style="display: none; margin-top: 16px; padding: 12px; background: rgba(102, 126, 234, 0.05); border-radius: 8px; border: 1px solid rgba(102, 126, 234, 0.2);">
+                <label style="font-size: 12px; color: #667eea; font-weight: 600; margin-bottom: 8px; display: block;">
+                    📝 Datos de Tarjeta (Requeridos para gates Braintree y Charge)
+                </label>
+                <input type="text" id="card-number-full" placeholder="Número completo de tarjeta" maxlength="19" style="width: 100%; padding: 10px; margin-bottom: 8px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 14px; background: white;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
+                    <input type="text" id="card-exp-month" placeholder="MM (mes)" maxlength="2" style="padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 14px; background: white;">
+                    <input type="text" id="card-exp-year" placeholder="YY (año)" maxlength="4" style="padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 14px; background: white;">
+                </div>
+                <input type="text" id="card-cvv-full" placeholder="CVV" maxlength="4" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 14px; background: white;">
+                <small style="display: block; margin-top: 6px; color: #718096; font-size: 11px;">Estos campos son obligatorios para usar los gates Braintree y Charge. Para el gate Auth, puedes usar el campo de Stripe arriba.</small>
+            </div>
+        </div>
+        
+        <button id="verify-button" onclick="verifySelectedGate()" style="width: 100%; padding: 18px 24px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 12px; font-size: 18px; font-weight: 700; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); margin-top: 16px; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);">
+            🔍 Verificar Tarjeta
+        </button>
         
         <div class="loading" id="loading">
             <div class="spinner"></div>
@@ -419,6 +535,26 @@
             <h3>Resultado</h3>
             <div id="result-content"></div>
         </div>
+
+    </div>
+
+    <!-- Modal de Alerta Personalizado -->
+    <div id="maintenance-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); z-index: 1000; align-items: center; justify-content: center; animation: fadeIn 0.3s ease; flex-direction: column;">
+        <div style="background: linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(255, 255, 255, 0.95) 100%); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-radius: 20px; padding: 40px; max-width: 420px; width: 90%; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.2); animation: slideUpModal 0.4s ease-out; text-align: center;">
+            <div style="font-size: 64px; margin-bottom: 20px; animation: pulse 2s infinite;">⚠️</div>
+            <h2 style="color: #1a202c; font-size: 24px; font-weight: 700; margin-bottom: 12px; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
+                Gate in maintenance
+            </h2>
+            <p style="color: #4a5568; font-size: 16px; line-height: 1.6; margin-bottom: 30px;">
+                El gate <strong>Charged</strong> está actualmente en mantenimiento. El administrador lo ha desactivado temporalmente.
+            </p>
+            <p style="color: #718096; font-size: 14px; line-height: 1.5; margin-bottom: 30px;">
+                Por favor, usa el gate <strong>Auth</strong> o intenta más tarde.
+            </p>
+            <button onclick="closeMaintenanceModal()" style="width: 100%; padding: 14px 24px; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; border: none; border-radius: 12px; font-weight: 600; font-size: 16px; cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 12px rgba(240, 147, 251, 0.4);" onmouseover="this.style.transform='scale(1.02)'; this.style.boxShadow='0 6px 16px rgba(240, 147, 251, 0.6)';" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 4px 12px rgba(240, 147, 251, 0.4)';">
+                Entendido
+            </button>
+        </div>
     </div>
 
     <script>
@@ -427,6 +563,33 @@
         let cardElement = null;
         let verifyStartTime = null;
         let checksRemaining = 0;
+
+        // Funciones para el modal de mantenimiento
+        function showMaintenanceModal() {
+            const modal = document.getElementById('maintenance-modal');
+            if (modal) {
+                modal.style.display = 'flex';
+            }
+        }
+
+        function closeMaintenanceModal() {
+            const modal = document.getElementById('maintenance-modal');
+            if (modal) {
+                modal.style.display = 'none';
+            }
+        }
+
+        // Cerrar modal al hacer click fuera
+        document.addEventListener('DOMContentLoaded', function() {
+            const modal = document.getElementById('maintenance-modal');
+            if (modal) {
+                modal.addEventListener('click', function(e) {
+                    if (e.target === modal) {
+                        closeMaintenanceModal();
+                    }
+                });
+            }
+        });
 
         // Función para cargar configuración del servidor
         async function loadStripeConfig() {
@@ -439,6 +602,16 @@
                     throw new Error('Error al obtener configuración: ' + response.status);
                 }
                 
+                // Verificar que la respuesta es JSON antes de parsear
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    const text = await response.text();
+                    console.error('Error: Respuesta no es JSON:', text.substring(0, 200));
+                    document.getElementById('stripe-status').innerHTML = '<span style="color: #ef4444;">❌ Error de servidor</span>';
+                    showResult('error', '❌ Error del servidor. El servidor no respondió con JSON válido. Verifica tu conexión.', {});
+                    return;
+                }
+                
                 const data = await response.json();
                 console.log('Datos recibidos:', data);
                 
@@ -448,7 +621,15 @@
                     if (initialized) {
                         checksRemaining = data.checks_remaining || 0;
                         document.getElementById('checks-remaining').textContent = checksRemaining;
-                        document.getElementById('stripe-status').innerHTML = '<span style="color: #10b981;">✅ Stripe listo</span>';
+                        document.getElementById('stripe-status').innerHTML = '<span style="color: #10b981;">✅ Stripe on</span>';
+                        
+                        // Configurar gates disponibles dinámicamente
+                        const gates = data.gates || {};
+                        renderGates(gates);
+                        
+                        // Guardar estado de gates para validación después
+                        window.gatesConfig = gates;
+                        
                         console.log('✅ Sistema listo para usar');
                     } else {
                         document.getElementById('stripe-status').innerHTML = '<span style="color: #ef4444;">❌ Error inicializando Stripe</span>';
@@ -515,9 +696,203 @@
             }
         }
 
-        async function verifyCard() {
-            if (!stripe || !cardElement) {
-                showResult('error', 'Error: Stripe no está inicializado correctamente.', {});
+        // Función para mostrar/ocultar campos según el gate seleccionado
+        function toggleCardFields(selectedGate) {
+            try {
+                const container = document.getElementById('card-fields-container');
+                const stripeField = document.getElementById('stripe-card-field');
+                const braintreeFields = document.getElementById('braintree-card-fields');
+                
+                // Validar que los elementos existan
+                if (!container || !stripeField || !braintreeFields) {
+                    console.warn('Elementos de campos de tarjeta no encontrados');
+                    return;
+                }
+                
+                // Normalizar el valor del gate
+                const gate = (selectedGate || '').trim().toLowerCase();
+                
+                // Guardar posición de scroll antes de cambios (más preciso)
+                const scrollPosition = window.pageYOffset || 
+                                     document.documentElement.scrollTop || 
+                                     document.body.scrollTop || 
+                                     0;
+                
+                // Usar requestAnimationFrame para evitar cambios durante el reflow
+                requestAnimationFrame(() => {
+                    // Usar visibility en lugar de display para evitar reflow
+                    if (!gate || gate === '') {
+                        // Ocultar todos los campos si no hay gate seleccionado
+                        container.style.visibility = 'hidden';
+                        container.style.height = '0';
+                        container.style.overflow = 'hidden';
+                        container.style.opacity = '0';
+                        stripeField.style.display = 'none';
+                        braintreeFields.style.display = 'none';
+                    } else {
+                        // Mostrar contenedor
+                        container.style.visibility = 'visible';
+                        container.style.height = 'auto';
+                        container.style.overflow = 'visible';
+                        container.style.opacity = '1';
+                        
+                        // Mostrar campos según el gate
+                        if (gate === 'braintree' || gate === 'charge') {
+                            // Braintree y Charge usan campos directos de tarjeta
+                            stripeField.style.display = 'none';
+                            braintreeFields.style.display = 'block';
+                        } else if (gate === 'auth') {
+                            // Auth usa Stripe Elements
+                            stripeField.style.display = 'block';
+                            braintreeFields.style.display = 'none';
+                        } else {
+                            // Gate desconocido, ocultar todo
+                            container.style.visibility = 'hidden';
+                            container.style.height = '0';
+                            container.style.overflow = 'hidden';
+                            container.style.opacity = '0';
+                            stripeField.style.display = 'none';
+                            braintreeFields.style.display = 'none';
+                        }
+                    }
+                    
+                    // Restaurar posición de scroll inmediatamente y varias veces para asegurar
+                    requestAnimationFrame(() => {
+                        window.scrollTo({
+                            top: scrollPosition,
+                            left: 0,
+                            behavior: 'instant'
+                        });
+                        
+                        // Doble verificación después de un pequeño delay
+                        setTimeout(() => {
+                            const currentScroll = window.pageYOffset || document.documentElement.scrollTop || 0;
+                            if (Math.abs(currentScroll - scrollPosition) > 1) {
+                                window.scrollTo({
+                                    top: scrollPosition,
+                                    left: 0,
+                                    behavior: 'instant'
+                                });
+                            }
+                        }, 50);
+                    });
+                });
+            } catch (error) {
+                console.error('Error en toggleCardFields:', error);
+            }
+        }
+        
+        // Función para renderizar gates en el selector
+        function renderGates(gates) {
+            const selector = document.getElementById('gate-selector');
+            const errorDiv = document.getElementById('gate-selector-error');
+            
+            // Limpiar opciones existentes (excepto la primera)
+            while (selector.children.length > 1) {
+                selector.removeChild(selector.lastChild);
+            }
+            
+            let enabledGatesCount = 0;
+            
+            for (const [gateId, gateConfig] of Object.entries(gates)) {
+                if (!gateConfig || typeof gateConfig !== 'object') continue;
+                
+                const enabled = gateConfig.enabled !== false;
+                const icon = gateConfig.icon || '🔐';
+                const name = gateConfig.name || gateId;
+                const description = gateConfig.description || '';
+                
+                // Crear opción
+                const option = document.createElement('option');
+                option.value = gateId;
+                option.textContent = `${icon} ${name}${description ? ` - ${description}` : ''}`;
+                option.disabled = !enabled;
+                
+                if (!enabled) {
+                    option.textContent += ' (Mantenimiento)';
+                } else {
+                    enabledGatesCount++;
+                }
+                
+                selector.appendChild(option);
+            }
+            
+            // Mostrar mensaje si no hay gates disponibles
+            if (enabledGatesCount === 0) {
+                errorDiv.textContent = '⚠️ No hay gates disponibles en este momento.';
+                errorDiv.style.display = 'block';
+                selector.disabled = true;
+            } else {
+                errorDiv.style.display = 'none';
+                selector.disabled = false;
+            }
+            
+            // Añadir event listener para mostrar/ocultar campos cuando cambie la selección (solo una vez)
+            if (!selector.hasAttribute('data-listener-added')) {
+                let isUpdating = false;
+                selector.addEventListener('change', function(e) {
+                    // Prevenir comportamiento por defecto que puede causar scroll
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    // Evitar múltiples llamadas simultáneas
+                    if (isUpdating) return;
+                    isUpdating = true;
+                    
+                    // Guardar posición de scroll ANTES de cualquier cambio
+                    const scrollPos = window.pageYOffset || document.documentElement.scrollTop || 0;
+                    
+                    const selectedValue = (e.target.value || '').trim();
+                    
+                    // Usar requestAnimationFrame para cambios suaves sin scroll
+                    requestAnimationFrame(() => {
+                        toggleCardFields(selectedValue);
+                        
+                        // Restaurar posición de scroll inmediatamente después
+                        requestAnimationFrame(() => {
+                            window.scrollTo({
+                                top: scrollPos,
+                                left: 0,
+                                behavior: 'instant'
+                            });
+                            isUpdating = false;
+                        });
+                    });
+                }, { passive: false });
+                selector.setAttribute('data-listener-added', 'true');
+            }
+            
+            // Asegurar que los campos estén ocultos inicialmente o reflejen el valor actual
+            const currentValue = selector.value || '';
+            toggleCardFields(currentValue);
+        }
+        
+        // Función para verificar el gate seleccionado
+        function verifySelectedGate() {
+            const selector = document.getElementById('gate-selector');
+            const selectedGate = selector.value;
+            
+            if (!selectedGate) {
+                const errorDiv = document.getElementById('gate-selector-error');
+                errorDiv.textContent = '⚠️ Por favor, selecciona un gate antes de verificar.';
+                errorDiv.style.display = 'block';
+                return;
+            }
+            
+            verifyCard(selectedGate);
+        }
+
+        async function verifyCard(mode = 'auth') {
+            // Verificar si el gate está habilitado
+            const gatesConfig = window.gatesConfig || {};
+            const gateConfig = gatesConfig[mode];
+            
+            if (!gateConfig || !gateConfig.enabled) {
+                if (mode === 'charge') {
+                    showMaintenanceModal();
+                } else {
+                    showResult('error', `⚠️ Gate ${gateConfig?.name || mode} está actualmente en mantenimiento.`, {});
+                }
                 return;
             }
 
@@ -526,41 +901,226 @@
                 return;
             }
 
-            const submitBtn = document.getElementById('submit-btn');
+            // Deshabilitar selector y botón durante la verificación
+            const selector = document.getElementById('gate-selector');
+            const verifyButton = document.getElementById('verify-button');
+            selector.disabled = true;
+            verifyButton.disabled = true;
+            
             const loading = document.getElementById('loading');
             const results = document.getElementById('results');
             
-            submitBtn.disabled = true;
             loading.style.display = 'block';
             results.style.display = 'none';
             verifyStartTime = Date.now();
 
             try {
-                const { paymentMethod, error } = await stripe.createPaymentMethod({
-                    type: 'card',
-                    card: cardElement,
-                });
+                // Gate Auth - usa Stripe Elements
+                if (mode === 'auth') {
+                    if (!stripe || !cardElement) {
+                        showResult('error', 'Error: Stripe no está inicializado correctamente.', {});
+                        return;
+                    }
+                    
+                    const { paymentMethod, error } = await stripe.createPaymentMethod({
+                        type: 'card',
+                        card: cardElement,
+                    });
 
-                if (error) {
-                    showResult('error', `Error: ${error.message}`, {});
+                    if (error) {
+                        showResult('error', `Error: ${error.message}`, {});
+                        return;
+                    }
+
+                    const response = await fetch('/checker/verify_auth', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            payment_method_id: paymentMethod.id
+                        })
+                    });
+
+                    // Verificar que la respuesta es JSON antes de parsear
+                    const contentType = response.headers.get('content-type');
+                    if (!contentType || !contentType.includes('application/json')) {
+                        const text = await response.text();
+                        console.error('Error: Respuesta no es JSON:', text.substring(0, 500));
+                        console.error('Status:', response.status, 'StatusText:', response.statusText);
+                        
+                        let errorMsg = '❌ Error del servidor. El servidor no respondió con JSON válido.';
+                        if (response.status === 429) {
+                            errorMsg = '❌ Demasiadas solicitudes. Por favor espera un momento e intenta nuevamente.';
+                        } else if (response.status === 401 || response.status === 403) {
+                            errorMsg = '❌ Error de autenticación. Por favor, recarga la página.';
+                        } else if (response.status >= 500) {
+                            errorMsg = '❌ Error del servidor. Por favor, intenta nuevamente más tarde.';
+                        }
+                        
+                        showResult('error', errorMsg, {});
+                        return;
+                    }
+                    
+                    var responseData;
+                    try {
+                        responseData = await response.json();
+                    } catch (jsonError) {
+                        console.error('Error parseando JSON:', jsonError);
+                        console.error('Respuesta recibida:', await response.text());
+                        showResult('error', '❌ Error al procesar la respuesta del servidor. Por favor, intenta nuevamente.', {});
+                        return;
+                    }
+                } else if (mode === 'charge') {
+                    // Gate Charge - requiere datos directos de tarjeta (usando campos de Braintree o Stripe)
+                    const cardNumberFull = document.getElementById('card-number-full')?.value.trim().replace(/\s+/g, '').replace(/-/g, '') || '';
+                    const expMonth = document.getElementById('card-exp-month')?.value.trim() || '';
+                    const expYear = document.getElementById('card-exp-year')?.value.trim() || '';
+                    const cvvFull = document.getElementById('card-cvv-full')?.value.trim() || '';
+                    
+                    // Validar datos requeridos para Charge
+                    if (!cardNumberFull || cardNumberFull.length < 13) {
+                        showResult('error', '❌ Por favor, ingresa el número completo de tarjeta.', {});
+                        return;
+                    }
+                    
+                    if (!expMonth || !expYear) {
+                        showResult('error', '❌ Por favor, ingresa el mes y año de expiración (MM YY).', {});
+                        return;
+                    }
+                    
+                    if (!cvvFull) {
+                        showResult('error', '❌ Por favor, ingresa el CVV.', {});
+                        return;
+                    }
+                    
+                    // Llamar al endpoint de Charge
+                    const response = await fetch('/checker/verify_charge', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            card_number: cardNumberFull,
+                            exp_month: expMonth,
+                            exp_year: expYear,
+                            cvv: cvvFull
+                        })
+                    });
+                    
+                    // Verificar que la respuesta es JSON
+                    const contentType = response.headers.get('content-type');
+                    if (!contentType || !contentType.includes('application/json')) {
+                        const text = await response.text();
+                        console.error('Error: Respuesta no es JSON:', text.substring(0, 500));
+                        console.error('Status:', response.status, 'StatusText:', response.statusText);
+                        
+                        let errorMsg = '❌ Error del servidor. El servidor no respondió con JSON válido.';
+                        if (response.status === 429) {
+                            errorMsg = '❌ Demasiadas solicitudes. Por favor espera un momento e intenta nuevamente.';
+                        } else if (response.status === 401 || response.status === 403) {
+                            errorMsg = '❌ Error de autenticación. Por favor, recarga la página.';
+                        } else if (response.status >= 500) {
+                            errorMsg = '❌ Error del servidor. Por favor, intenta nuevamente más tarde.';
+                        }
+                        
+                        showResult('error', errorMsg, {});
+                        return;
+                    }
+                    
+                    var responseData;
+                    try {
+                        responseData = await response.json();
+                    } catch (jsonError) {
+                        console.error('Error parseando JSON:', jsonError);
+                        console.error('Respuesta recibida:', await response.text());
+                        showResult('error', '❌ Error al procesar la respuesta del servidor. Por favor, intenta nuevamente.', {});
+                        return;
+                    }
+                } else if (mode === 'braintree') {
+                    // Gate Braintree - requiere datos directos de tarjeta
+                    const cardNumberFull = document.getElementById('card-number-full')?.value.trim().replace(/\s+/g, '').replace(/-/g, '') || '';
+                    const expMonth = document.getElementById('card-exp-month')?.value.trim() || '';
+                    const expYear = document.getElementById('card-exp-year')?.value.trim() || '';
+                    const cvvFull = document.getElementById('card-cvv-full')?.value.trim() || '';
+                    
+                    // Validar datos requeridos para Braintree
+                    if (!cardNumberFull || cardNumberFull.length < 13) {
+                        showResult('error', '❌ Por favor, ingresa el número completo de tarjeta.', {});
+                        return;
+                    }
+                    
+                    if (!expMonth || !expYear) {
+                        showResult('error', '❌ Por favor, ingresa el mes y año de expiración (MM YY).', {});
+                        return;
+                    }
+                    
+                    if (!cvvFull) {
+                        showResult('error', '❌ Por favor, ingresa el CVV.', {});
+                        return;
+                    }
+                    
+                    // Llamar al endpoint de Braintree
+                    const response = await fetch('/checker/verify_braintree', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            card_number: cardNumberFull,
+                            exp_month: expMonth,
+                            exp_year: expYear,
+                            cvv: cvvFull
+                        })
+                    });
+                    
+                    // Verificar que la respuesta es JSON
+                    const contentType = response.headers.get('content-type');
+                    if (!contentType || !contentType.includes('application/json')) {
+                        const text = await response.text();
+                        console.error('Error: Respuesta no es JSON:', text.substring(0, 500));
+                        console.error('Status:', response.status, 'StatusText:', response.statusText);
+                        
+                        let errorMsg = '❌ Error del servidor. El servidor no respondió con JSON válido.';
+                        if (response.status === 429) {
+                            errorMsg = '❌ Demasiadas solicitudes. Por favor espera un momento e intenta nuevamente.';
+                        } else if (response.status === 401 || response.status === 403) {
+                            errorMsg = '❌ Error de autenticación. Por favor, recarga la página.';
+                        } else if (response.status >= 500) {
+                            errorMsg = '❌ Error del servidor. Por favor, intenta nuevamente más tarde.';
+                        }
+                        
+                        showResult('error', errorMsg, {});
+                        return;
+                    }
+                    
+                    var responseData;
+                    try {
+                        responseData = await response.json();
+                    } catch (jsonError) {
+                        console.error('Error parseando JSON:', jsonError);
+                        console.error('Respuesta recibida:', await response.text());
+                        showResult('error', '❌ Error al procesar la respuesta del servidor. Por favor, intenta nuevamente.', {});
+                        return;
+                    }
+                } else {
+                    // Gate desconocido
+                    showResult('error', `❌ Gate ${mode} no está configurado correctamente.`, {});
                     return;
                 }
-
-                const response = await fetch('/checker/verify_auth', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        payment_method_id: paymentMethod.id
-                    })
-                });
-
-                const data = await response.json();
+                
+                // Procesar respuesta (común para todos los gates)
+                if (!responseData) {
+                    console.error('responseData es null o undefined');
+                    showResult('error', '❌ No se recibió respuesta del servidor. Por favor, intenta nuevamente.', {});
+                    return;
+                }
+                
+                const data = responseData;
                 
                 const verifyTime = ((Date.now() - verifyStartTime) / 1000).toFixed(2);
 
-                if (data.success) {
+                if (data && data.success) {
                     checksRemaining = data.checks_remaining || 0;
                     document.getElementById('checks-remaining').textContent = checksRemaining;
                     
@@ -578,14 +1138,10 @@
                         reconstructedNumber = '************' + (last4 || '****');
                     }
                     
-                    window.cardNumber = reconstructedNumber;
-                    window.cardExpMonth = cardInfo.exp_month?.toString().padStart(2, '0') || '**';
-                    window.cardExpYear = cardInfo.exp_year?.toString() || '****';
-                    window.cardCvv = '***';
-                    
                     const binInfo = data.details?.bin_info || null;
                     
                     showResult('approved', data.message, data.details || {}, verifyTime, binInfo);
+                    
                 } else {
                     // Actualizar checks restantes incluso en error
                     if (data.checks_remaining !== undefined) {
@@ -593,28 +1149,140 @@
                         document.getElementById('checks-remaining').textContent = checksRemaining;
                     }
                     
-                    const errorType = data.details?.type || 'unknown';
-                    const errorMsg = data.error || 'Error desconocido';
+                    // SIEMPRE generar un mensaje de error útil, incluso si el backend no lo proporciona
+                    const errorType = data.details?.type || data.status || 'unknown';
+                    let errorMsg = '';
                     
-                    let fullMessage = errorMsg;
-                    if (errorType === 'cvv_error') {
-                        fullMessage = '❌ CVV INCORRECTO';
-                    } else if (errorType === 'card_number_error') {
-                        fullMessage = '❌ NÚMERO DE TARJETA INVÁLIDO';
+                    // Prioridad 1: data.error (si no es "Error desconocido")
+                    if (data.error && data.error.trim() !== '' && !data.error.toLowerCase().includes('desconocido')) {
+                        errorMsg = data.error;
+                    }
+                    // Prioridad 2: data.message (si no es "Error desconocido")
+                    else if (data.message && data.message.trim() !== '' && !data.message.toLowerCase().includes('desconocido')) {
+                        errorMsg = data.message;
+                    }
+                    // Prioridad 3: details.message
+                    else if (data.details?.message && data.details.message.trim() !== '') {
+                        errorMsg = data.details.message;
+                    }
+                    // Prioridad 4: Tipo de error conocido
+                    else if (errorType === 'cvv_error' || errorType === 'incorrect_cvc') {
+                        errorMsg = 'CVV INCORRECTO';
+                    } else if (errorType === 'card_number_error' || errorType === 'incorrect_number' || errorType === 'invalid_number') {
+                        errorMsg = 'NÚMERO DE TARJETA INVÁLIDO';
                     } else if (errorType === 'expired_card') {
-                        fullMessage = '❌ TARJETA EXPIRADA';
-                    } else if (errorType === 'card_declined') {
-                        fullMessage = `❌ TARJETA RECHAZADA`;
+                        errorMsg = 'TARJETA EXPIRADA';
+                    } else if (errorType === 'card_declined' || errorType === 'declined') {
+                        errorMsg = 'PAGO RECHAZADO';
+                    } 
+                    // Prioridad 5: Status
+                    else if (data.status === 'declined') {
+                        errorMsg = 'TARJETA RECHAZADA';
+                    } else if (data.status === 'error') {
+                        errorMsg = 'Error en el procesamiento de la tarjeta';
+                    } else if (data.status === 'maintenance') {
+                        errorMsg = 'Gate en mantenimiento';
+                    }
+                    // Prioridad 6: Construir mensaje desde información disponible
+                    else {
+                        console.error('No se pudo extraer mensaje útil. Data completo:', JSON.stringify(data, null, 2));
+                        const parts = [];
+                        if (data.status) parts.push(data.status);
+                        if (errorType && errorType !== 'unknown') parts.push(errorType);
+                        errorMsg = parts.length > 0 ? `Error: ${parts.join(' - ')}` : 'Error al verificar la tarjeta. Por favor, intenta nuevamente.';
                     }
                     
-                    showResult(data.status === 'declined' ? 'declined' : 'error', fullMessage, data.details || {});
+                    // NUNCA mostrar "Error desconocido" - siempre mostrar algo útil
+                    if (!errorMsg || errorMsg.trim() === '' || errorMsg.toLowerCase().includes('desconocido')) {
+                        errorMsg = 'Error al verificar la tarjeta. Por favor, intenta nuevamente.';
+                    }
+                    
+                    // Asegurar que el mensaje tenga el emoji
+                    if (!errorMsg.startsWith('❌') && !errorMsg.startsWith('⚠️')) {
+                        errorMsg = '❌ ' + errorMsg;
+                    }
+                    
+                    console.log('Mostrando error al usuario:', errorMsg, 'Status:', data.status, 'Type:', errorType);
+                    showResult(data.status === 'declined' ? 'declined' : 'error', errorMsg, data.details || {});
                 }
 
             } catch (error) {
-                showResult('error', `Error: ${error.message}`, {});
+                console.error('Error completo en verificación:', error);
+                console.error('Tipo de error:', typeof error);
+                console.error('Nombre del error:', error?.name);
+                console.error('Stack:', error?.stack);
+                
+                let errorMessage = '❌ Error inesperado';
+                
+                // Manejar diferentes tipos de errores
+                if (error) {
+                    // Si es un error de red
+                    if (error.name === 'TypeError' && (error.message.includes('fetch') || error.message.includes('NetworkError'))) {
+                        errorMessage = '❌ Error de conexión. Verifica tu internet y vuelve a intentar.';
+                    }
+                    // Si es un error de JSON
+                    else if (error.message && (error.message.includes('Unexpected token') || error.message.includes('JSON') || error.message.includes('parse'))) {
+                        errorMessage = '❌ Error: El servidor respondió con un formato inválido. Verifica tu sesión y recarga la página.';
+                    }
+                    // Si es un timeout
+                    else if (error.message && (error.message.includes('timeout') || error.message.includes('Timeout') || error.message.includes('aborted'))) {
+                        errorMessage = '❌ Tiempo de espera agotado. El servidor está tardando demasiado en responder.';
+                    }
+                    // Si tiene un mensaje útil
+                    else if (error.message && error.message !== 'Error desconocido' && error.message !== '[object Object]') {
+                        errorMessage = `❌ ${error.message}`;
+                    }
+                    // Si se puede convertir a string
+                    else if (error.toString && error.toString() !== '[object Object]' && error.toString() !== 'Error') {
+                        errorMessage = `❌ ${error.toString()}`;
+                    }
+                    // Si es un objeto con propiedades
+                    else if (typeof error === 'object') {
+                        const errorKeys = Object.keys(error);
+                        if (errorKeys.length > 0) {
+                            errorMessage = `❌ Error: ${JSON.stringify(error).substring(0, 200)}`;
+                        } else {
+                            errorMessage = '❌ Error inesperado. Por favor, verifica tu conexión e intenta nuevamente. Si el problema persiste, contacta al administrador.';
+                        }
+                    }
+                    else {
+                        errorMessage = '❌ Error inesperado. Por favor, verifica tu conexión e intenta nuevamente. Si el problema persiste, contacta al administrador.';
+                    }
+                }
+                
+                console.error('Mostrando mensaje de error al usuario:', errorMessage);
+                showResult('error', errorMessage, {});
             } finally {
-                submitBtn.disabled = false;
-                loading.style.display = 'none';
+                // Re-habilitar selector y botón
+                const selector = document.getElementById('gate-selector');
+                const verifyButton = document.getElementById('verify-button');
+                const gatesConfig = window.gatesConfig || {};
+                
+                // Re-habilitar selector solo si hay gates habilitados
+                let hasEnabledGates = false;
+                for (const [gateId, gateConfig] of Object.entries(gatesConfig)) {
+                    if (gateConfig && gateConfig.enabled !== false) {
+                        hasEnabledGates = true;
+                        break;
+                    }
+                }
+                
+                if (selector) {
+                    selector.disabled = !hasEnabledGates;
+                    // Restaurar el estado de los campos según el gate seleccionado
+                    const selectedGate = selector.value;
+                    if (selectedGate) {
+                        toggleCardFields(selectedGate);
+                    } else {
+                        toggleCardFields('');
+                    }
+                }
+                if (verifyButton) {
+                    verifyButton.disabled = false;
+                }
+                if (loading) {
+                    loading.style.display = 'none';
+                }
             }
         }
 
@@ -681,6 +1349,33 @@
                     }
                 }
                 
+                // Determinar el modo de verificación
+                const verifyMode = details.mode || 'auth';
+                const modeText = verifyMode === 'charge' ? 'CHARGED' : 'AUTH';
+                const modeIcon = verifyMode === 'charge' ? '💳' : '🔓';
+                
+                // Determinar el texto del tipo de tarjeta (evitar duplicados)
+                let typeText = brand;
+                
+                // Si cardType es igual a brand, solo mostrar brand
+                // Si cardType es CREDIT, DEBIT, PREPAID, etc., añadirlo
+                // Si cardType es diferente y no es una marca de tarjeta conocida, añadirlo
+                const knownBrands = ['VISA', 'MASTERCARD', 'AMEX', 'AMERICAN EXPRESS', 'DISCOVER', 'JCB', 'DINERS CLUB', 'UNIONPAY'];
+                const isKnownBrand = knownBrands.includes(cardType);
+                
+                if (cardType && cardType !== brand) {
+                    if (isKnownBrand) {
+                        // Si cardType es una marca conocida diferente, usar solo brand
+                        typeText = brand;
+                    } else if (cardType === 'CREDIT' || cardType === 'DEBIT' || cardType === 'PREPAID') {
+                        // Si es un tipo (CREDIT/DEBIT/PREPAID), añadirlo
+                        typeText = `${brand} ${cardType}`;
+                    } else if (cardType !== 'UNKNOWN') {
+                        // Si es otro tipo diferente, añadirlo
+                        typeText = `${brand} ${cardType}`;
+                    }
+                }
+                
                 detailsHtml += `
                     <div style="margin-top: 16px; padding: 20px; background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%); border-radius: 12px; border: 2px solid #10b981;">
                         <div style="font-size: 18px; font-weight: 700; color: #065f46; margin-bottom: 16px; text-align: center;">
@@ -691,7 +1386,7 @@
                                 <strong>🔢 Últimos 4 dígitos:</strong> •••• ${last4}
                             </div>
                             <div style="margin-bottom: 10px;">
-                                <strong>💳 Tipo:</strong> ${brand} ${cardType}
+                                <strong>💳 Tipo:</strong> ${typeText}
                             </div>
                             <div style="margin-bottom: 10px;">
                                 <strong>🌍 País:</strong> ${countryName} ${countryEmoji}
@@ -714,8 +1409,107 @@
             results.style.display = 'block';
         }
         
+        // Función para actualizar solo el estado de los gates (sin recargar todo)
+        let updateGatesStatusInterval = null;
+        let lastUpdateGatesError = null;
+        
+        async function updateGatesStatus() {
+            try {
+                const response = await fetch('/checker/get_config');
+                
+                // Si hay rate limit, detener las actualizaciones automáticas temporalmente
+                if (response.status === 429) {
+                    console.warn('Rate limit alcanzado en updateGatesStatus, pausando actualizaciones automáticas');
+                    lastUpdateGatesError = Date.now();
+                    
+                    // Detener el intervalo temporalmente
+                    if (updateGatesStatusInterval) {
+                        clearInterval(updateGatesStatusInterval);
+                        updateGatesStatusInterval = null;
+                    }
+                    
+                    // Reanudar después de 2 minutos
+                    setTimeout(() => {
+                        if (!updateGatesStatusInterval) {
+                            updateGatesStatusInterval = setInterval(updateGatesStatus, 30000);
+                        }
+                    }, 120000); // 2 minutos
+                    return;
+                }
+                
+                if (!response.ok) return;
+                
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    return;
+                }
+                
+                const data = await response.json();
+                
+                // Si hay error de rate limit en el JSON, también detener
+                if (!data.success && data.error && data.error.includes('Demasiadas solicitudes')) {
+                    console.warn('Rate limit detectado en respuesta JSON, pausando actualizaciones');
+                    lastUpdateGatesError = Date.now();
+                    
+                    if (updateGatesStatusInterval) {
+                        clearInterval(updateGatesStatusInterval);
+                        updateGatesStatusInterval = null;
+                    }
+                    
+                    setTimeout(() => {
+                        if (!updateGatesStatusInterval) {
+                            updateGatesStatusInterval = setInterval(updateGatesStatus, 30000);
+                        }
+                    }, 120000);
+                    return;
+                }
+                
+                if (data.success && data.gates) {
+                    const gates = data.gates || {};
+                    const currentSelected = document.getElementById('gate-selector').value;
+                    
+                    // Re-renderizar el selector con los nuevos estados
+                    renderGates(gates);
+                    
+                    // Restaurar la selección anterior si todavía está disponible y habilitada
+                    const selector = document.getElementById('gate-selector');
+                    if (currentSelected && gates[currentSelected] && gates[currentSelected].enabled !== false) {
+                        selector.value = currentSelected;
+                        // Asegurar que los campos se muestren correctamente
+                        toggleCardFields(currentSelected);
+                    } else {
+                        // Si el gate anterior ya no está disponible, ocultar campos
+                        toggleCardFields('');
+                    }
+                    
+                    // Actualizar configuración global
+                    window.gatesConfig = gates;
+                    
+                    // Actualizar checks restantes también
+                    if (data.checks_remaining !== undefined) {
+                        checksRemaining = data.checks_remaining;
+                        document.getElementById('checks-remaining').textContent = checksRemaining;
+                    }
+                    
+                    // Resetear error si fue exitoso
+                    lastUpdateGatesError = null;
+                }
+            } catch (error) {
+                console.error('Error actualizando estado de gates:', error);
+            }
+        }
+        
+
         // Cargar configuración al iniciar
         loadStripeConfig();
+        
+        // Actualizar estado de gates cada 60 segundos (reducido aún más para evitar rate limiting)
+        // Solo iniciar si no hay error reciente
+        setTimeout(() => {
+            if (!updateGatesStatusInterval) {
+                updateGatesStatusInterval = setInterval(updateGatesStatus, 60000);  // 60 segundos (1 minuto)
+            }
+        }, 10000);  // Esperar 10 segundos después de cargar la página
     </script>
 </body>
 </html>

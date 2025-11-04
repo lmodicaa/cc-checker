@@ -6,3 +6,4 @@ psycopg2-binary>=2.9.9
 flask-migrate>=4.0.7
 sqlalchemy>=2.0.35
 gunicorn>=22.0.0
+PyJWT>=2.8.0
