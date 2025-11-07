@@ -3,11 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Snoop Dogg Checker - Beta</title>
+    <title>Dark Checker</title>
     <script src="https://js.stripe.com/v3/"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -16,513 +13,438 @@
         }
         
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
-            background-size: 400% 400%;
-            animation: gradientShift 15s ease infinite;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            background: #0d1117;
             min-height: 100vh;
-            padding: 20px;
+            padding: 30px 20px;
             display: flex;
             align-items: center;
             justify-content: center;
+            color: #c9d1d9;
         }
-        
-        @keyframes gradientShift {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-        
-        @keyframes slideUpModal {
-            from {
-                opacity: 0;
-                transform: translateY(30px) scale(0.95);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0) scale(1);
-            }
-        }
-        
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.1); }
-        }
-        
+
         .container {
-            max-width: 520px;
+            max-width: 580px;
             width: 100%;
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(20px);
-            border-radius: 24px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3), 
-                        0 0 0 1px rgba(255, 255, 255, 0.2);
-            padding: 48px 40px;
-            animation: slideUp 0.5s ease-out;
+            background: #161b22;
+            padding: 32px;
+            border-radius: 12px;
+            border: 1px solid #30363d;
         }
-        
-        @keyframes slideUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        
+
         .header {
             text-align: center;
-            margin-bottom: 32px;
+            margin-bottom: 24px;
         }
-        
+
+        .logo {
+            width: 48px;
+            height: 48px;
+            margin: 0 auto 16px;
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 26px;
+        }
+
         h1 {
-            color: #1a202c;
-            font-size: 32px;
-            font-weight: 700;
-            letter-spacing: -0.5px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            margin-bottom: 10px;
+            font-size: 24px;
+            font-weight: 600;
+            color: #f0f6fc;
+            margin-bottom: 4px;
         }
-        
+
+        .subtitle {
+            color: #8b949e;
+            font-size: 14px;
+        }
+
         .user-info {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 12px 16px;
-            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
-            border-radius: 12px;
-            margin-bottom: 24px;
-            border: 1px solid rgba(102, 126, 234, 0.2);
+            padding: 12px;
+            background: #0d1117;
+            border-radius: 6px;
+            border: 1px solid #21262d;
+            margin-bottom: 20px;
+            font-size: 13px;
         }
-        
-        .user-info .checks-remaining {
+
+        .checks-remaining {
             font-weight: 600;
-            color: #667eea;
-            font-size: 14px;
+            color: #f59e0b;
         }
-        
-        .user-info .logout-btn {
-            background: rgba(239, 68, 68, 0.1);
-            color: #ef4444;
-            padding: 6px 12px;
-            border-radius: 8px;
-            border: none;
-            font-size: 12px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        
-        .user-info .logout-btn:hover {
-            background: rgba(239, 68, 68, 0.2);
-            transform: translateY(-1px);
-        }
-        
+
         .beta-badge {
-            display: inline-block;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 11px;
+            background: rgba(245, 158, 11, 0.1);
+            border: 1px solid rgba(245, 158, 11, 0.2);
+            color: #f59e0b;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 10px;
             font-weight: 600;
-            margin-bottom: 16px;
-        }
-        
-        .form-group {
-            margin-bottom: 24px;
-        }
-        
-        label {
-            display: block;
-            margin-bottom: 10px;
-            color: #2d3748;
-            font-weight: 600;
-            font-size: 14px;
-            letter-spacing: 0.3px;
             text-transform: uppercase;
         }
-        
-        #card-element {
-            padding: 18px;
-            border: 2px solid #e2e8f0;
-            border-radius: 12px;
-            background: white;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        
-        #card-element.StripeElement--focus {
-            border-color: #667eea;
-            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
-        }
-        
-        #card-element.StripeElement--invalid {
-            border-color: #ef4444;
-            box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.1);
-        }
-        
-        #card-element.StripeElement--complete {
-            border-color: #10b981;
-        }
-        
-        #card-errors {
-            color: #ef4444;
-            margin-top: 12px;
-            font-size: 13px;
+
+        .logout-btn {
+            background: #21262d;
+            color: #f85149;
+            border: 1px solid #f85149;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
             font-weight: 500;
-            min-height: 20px;
-            padding-left: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
         }
-        
-        #gate-selector {
-            appearance: none;
-            -webkit-appearance: none;
-            -moz-appearance: none;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23667eea' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-            background-position: right 18px center;
-            padding-right: 45px;
+
+        .logout-btn:hover {
+            background: #f85149;
+            color: #fff;
         }
-        
-        #gate-selector:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            background: rgba(46, 160, 67, 0.1);
+            border-radius: 6px;
+            margin-bottom: 16px;
+            font-size: 13px;
+            border: 1px solid rgba(46, 160, 67, 0.2);
         }
-        
-        #gate-selector:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            background-color: #f7fafc;
+
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            background: #3fb950;
+            border-radius: 50%;
         }
-        
-        #verify-button:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5);
+
+        .form-group {
+            margin-bottom: 16px;
         }
-        
-        #verify-button:active:not(:disabled) {
-            transform: translateY(0);
+
+        .form-group label {
+            display: block;
+            color: #f0f6fc;
+            font-weight: 500;
+            margin-bottom: 8px;
+            font-size: 14px;
         }
-        
-        #verify-button:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
-        }
-        
-        button {
+
+        .form-group select,
+        .form-group input {
             width: 100%;
-            padding: 18px 24px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            border-radius: 12px;
-            font-size: 16px;
+            padding: 10px 12px;
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            font-size: 14px;
+            color: #f0f6fc;
+            transition: all 0.15s;
+            outline: none;
+        }
+
+        .form-group select {
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23f59e0b' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            padding-right: 36px;
+            background-color: #0d1117;
+        }
+
+        .form-group input::placeholder {
+            color: #8b949e;
+        }
+
+        .form-group select:hover,
+        .form-group input:hover {
+            border-color: #484f58;
+        }
+
+        .form-group select:focus,
+        .form-group input:focus {
+            border-color: #f59e0b;
+            background: #0d1117;
+        }
+
+        .card-input-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .card-input-col {
+            flex: 1;
+        }
+
+        .card-input-col-small {
+            flex: 0 0 80px;
+        }
+
+        .card-fields-note {
+            color: #8b949e;
+            font-size: 11px;
+            margin-top: 6px;
+        }
+
+        .error-message {
+            background: rgba(248, 81, 73, 0.1);
+            border: 1px solid rgba(248, 81, 73, 0.3);
+            color: #ff7b72;
+            padding: 10px 12px;
+            border-radius: 6px;
+            margin-bottom: 12px;
+            font-size: 13px;
+            display: none;
+        }
+
+        #verify-button {
+            width: 100%;
+            padding: 12px 20px;
+            background: linear-gradient(180deg, #f59e0b, #d97706);
+            color: #000;
+            border: 1px solid #b45309;
+            border-radius: 6px;
+            font-size: 14px;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: all 0.15s;
             margin-top: 8px;
-            position: relative;
-            overflow: hidden;
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
         }
-        
-        button::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-            transition: left 0.5s;
+
+        #verify-button:hover:not(:disabled) {
+            background: linear-gradient(180deg, #fbbf24, #f59e0b);
         }
-        
-        button:hover:not(:disabled)::before {
-            left: 100%;
-        }
-        
-        button:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5);
-        }
-        
-        button:active:not(:disabled) {
-            transform: translateY(0);
-        }
-        
-        button:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
-        }
-        
-        /* Estilos específicos para botones de gate */
-        .gate-btn {
-            width: auto !important;
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .gate-btn::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-            transition: left 0.5s;
-        }
-        
-        .gate-btn:hover:not(:disabled) {
-            transform: translateY(-2px) scale(1.02);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
-        }
-        
-        .gate-btn:hover:not(:disabled)::before {
-            left: 100%;
-        }
-        
-        .gate-btn:active:not(:disabled) {
-            transform: translateY(0) scale(1);
-        }
-        
-        .gate-btn:disabled {
+
+        #verify-button:disabled {
             opacity: 0.5;
             cursor: not-allowed;
-            transform: none;
         }
-        
-        .results {
-            margin-top: 32px;
-            padding: 24px;
-            background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
-            border-radius: 16px;
-            display: none;
-            animation: fadeIn 0.4s ease-out;
-            border: 1px solid #e2e8f0;
-        }
-        
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        
-        .results h3 {
-            color: #2d3748;
-            margin-bottom: 16px;
-            font-size: 18px;
-            font-weight: 600;
-        }
-        
-        .result-item {
-            padding: 18px 20px;
-            margin-bottom: 12px;
-            border-radius: 12px;
-            border-left: 4px solid;
-            font-weight: 500;
-            font-size: 15px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-            animation: slideIn 0.3s ease-out;
-        }
-        
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateX(-10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
-        }
-        
-        .result-approved {
-            background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
-            border-color: #10b981;
-            color: #065f46;
-        }
-        
-        .result-declined {
-            background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
-            border-color: #ef4444;
-            color: #991b1b;
-        }
-        
-        .result-error {
-            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-            border-color: #f59e0b;
-            color: #92400e;
-        }
-        
+
         .loading {
             display: none;
             text-align: center;
-            margin-top: 24px;
-        }
-        
-        .loading p {
+            padding: 24px;
             margin-top: 16px;
-            color: #64748b;
-            font-weight: 500;
+            background: #0d1117;
+            border-radius: 6px;
+            border: 1px solid #21262d;
         }
-        
+
         .spinner {
-            border: 3px solid rgba(102, 126, 234, 0.1);
-            border-top: 3px solid #667eea;
+            border: 3px solid #21262d;
             border-radius: 50%;
-            width: 48px;
-            height: 48px;
-            animation: spin 0.8s linear infinite;
-            margin: 0 auto;
+            border-top: 3px solid #f59e0b;
+            width: 32px;
+            height: 32px;
+            animation: spin 0.7s linear infinite;
+            margin: 0 auto 12px;
         }
-        
+
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-        
-        .error-details {
-            margin-top: 12px;
-            padding: 12px;
-            background: rgba(239, 68, 68, 0.1);
-            border-radius: 8px;
-            font-size: 13px;
+
+        .loading p {
+            color: #8b949e;
+            font-size: 14px;
         }
-        
-        .error-details strong {
-            display: block;
-            margin-bottom: 6px;
-            color: #991b1b;
-        }
-        
-        .error-code {
-            font-family: 'Courier New', monospace;
-            background: rgba(0, 0, 0, 0.05);
-            padding: 4px 8px;
-            border-radius: 4px;
-            display: inline-block;
-            margin-top: 4px;
-        }
-        
-        .copy-button {
+
+        .results {
+            display: none;
             margin-top: 16px;
-            padding: 10px 20px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            border-radius: 8px;
+        }
+
+        .results h3 {
+            color: #f0f6fc;
             font-size: 14px;
             font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-            display: inline-block;
+            margin-bottom: 10px;
         }
-        
-        .copy-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+
+        .result-item {
+            padding: 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            line-height: 1.5;
         }
-        
-        .copy-button:active {
-            transform: translateY(0);
+
+        .result-approved {
+            background: rgba(46, 160, 67, 0.15);
+            border: 1px solid rgba(46, 160, 67, 0.4);
+            color: #7ee787;
         }
-        
+
+        .result-declined {
+            background: rgba(187, 128, 9, 0.15);
+            border: 1px solid rgba(187, 128, 9, 0.4);
+            color: #f0b429;
+        }
+
+        .result-error {
+            background: rgba(248, 81, 73, 0.15);
+            border: 1px solid rgba(248, 81, 73, 0.4);
+            color: #ff7b72;
+        }
+
         @media (max-width: 640px) {
-            .container {
-                padding: 32px 24px;
-                border-radius: 20px;
+            .card-input-row {
+                flex-direction: column;
             }
-            
-            h1 {
-                font-size: 28px;
+            .card-input-col-small {
+                flex: 1;
             }
-            
             .user-info {
                 flex-direction: column;
                 gap: 10px;
+                text-align: center;
             }
+        }
+
+        #maintenance-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(1, 4, 9, 0.8);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            padding: 32px;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+        }
+
+        .modal-content h2 {
+            color: #f0f6fc;
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .modal-content p {
+            color: #8b949e;
+            font-size: 14px;
+            line-height: 1.5;
+            margin-bottom: 10px;
+        }
+
+        .modal-content .icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        .modal-btn {
+            width: 100%;
+            padding: 10px 18px;
+            background: linear-gradient(180deg, #f59e0b, #d97706);
+            color: #000;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            margin-top: 16px;
+        }
+
+        .modal-btn:hover {
+            background: linear-gradient(180deg, #fbbf24, #f59e0b);
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <span class="beta-badge">🔒 BETA CERRADA</span>
-            <h1>🎤 Snoop Dogg Checker</h1>
+            <div class="logo">🌙</div>
+            <h1>Dark Checker</h1>
+            <p class="subtitle">Card Verification System</p>
         </div>
         
         <div class="user-info">
-            <div class="checks-remaining">
-                📊 <span id="checks-remaining">--</span> checks restantes
+            <div>
+                <span class="checks-remaining">Checks: <strong id="checks-remaining">--</strong></span>
             </div>
-            <button class="logout-btn" onclick="window.location.href='/checker/logout'">
-                🚪 Salir
-            </button>
+            <span class="beta-badge">BETA</span>
+            <button class="logout-btn" onclick="window.location.href='/checker/logout'">Logout</button>
         </div>
-        
-        <div style="text-align: center; margin-bottom: 24px;">
-            <div id="stripe-status" style="margin-top: 10px; padding: 8px; border-radius: 8px; font-size: 12px; font-weight: 600;">
-                <span style="color: #f59e0b;">⏳ Cargando Stripe...</span>
-            </div>
+
+        <div class="status-indicator">
+            <div class="status-dot"></div>
+            <div>Estado: <span id="stripe-status">Cargando...</span></div>
         </div>
-        
-        <!-- Selector de Gate y Botón de Verificación -->
-        <div class="form-group" style="margin-top: 24px;">
-            <label>Seleccionar Gate</label>
-            <select id="gate-selector" style="width: 100%; padding: 18px; border: 2px solid #e2e8f0; border-radius: 12px; background: white; font-size: 16px; font-weight: 600; color: #1a202c; cursor: pointer; transition: all 0.3s;">
-                <option value="">Selecciona un gate...</option>
+
+        <div class="form-group">
+            <label for="gate-selector">🎯 Selecciona el Gate</label>
+            <select id="gate-selector">
+                <option value="">-- Selecciona un gate --</option>
             </select>
-            <div id="gate-selector-error" style="color: #ef4444; margin-top: 8px; font-size: 13px; display: none;"></div>
+            <div id="gate-selector-error" class="error-message"></div>
         </div>
-        
-        <!-- Campos de Tarjeta (ocultos inicialmente) -->
-        <div id="card-fields-container" style="visibility: hidden; height: 0; overflow: hidden; transition: none;">
-            <div class="form-group" id="stripe-card-field" style="display: none;">
-                <label>Información de la Tarjeta</label>
-                <div id="card-element"></div>
-                <div id="card-errors" role="alert"></div>
-            </div>
-            
-            <!-- Campos para Braintree y Charge -->
-            <div class="form-group" id="braintree-card-fields" style="display: none; margin-top: 16px; padding: 12px; background: rgba(102, 126, 234, 0.05); border-radius: 8px; border: 1px solid rgba(102, 126, 234, 0.2);">
-                <label style="font-size: 12px; color: #667eea; font-weight: 600; margin-bottom: 8px; display: block;">
-                    📝 Datos de Tarjeta (Requeridos para gates Braintree y Charge)
-                </label>
-                <input type="text" id="card-number-full" placeholder="Número completo de tarjeta" maxlength="19" style="width: 100%; padding: 10px; margin-bottom: 8px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 14px; background: white;">
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
-                    <input type="text" id="card-exp-month" placeholder="MM (mes)" maxlength="2" style="padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 14px; background: white;">
-                    <input type="text" id="card-exp-year" placeholder="YY (año)" maxlength="4" style="padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 14px; background: white;">
+
+        <div id="card-fields-container" style="display: none;">
+            <div id="braintree-card-fields">
+                <div class="form-group">
+                    <label for="card-number-full">💳 Número de Tarjeta</label>
+                    <input 
+                        type="text" 
+                        id="card-number-full" 
+                        placeholder="4242 4242 4242 4242"
+                        maxlength="19"
+                        autocomplete="cc-number"
+                    >
                 </div>
-                <input type="text" id="card-cvv-full" placeholder="CVV" maxlength="4" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 14px; background: white;">
-                <small style="display: block; margin-top: 6px; color: #718096; font-size: 11px;">Estos campos son obligatorios para usar los gates Braintree y Charge. Para el gate Auth, puedes usar el campo de Stripe arriba.</small>
+                <div class="card-input-row">
+                    <div class="card-input-col">
+                        <label for="card-exp-month">Mes</label>
+                        <input 
+                            type="text" 
+                            id="card-exp-month" 
+                            placeholder="12"
+                            maxlength="2"
+                        >
+                    </div>
+                    <div class="card-input-col">
+                        <label for="card-exp-year">Año</label>
+                        <input 
+                            type="text" 
+                            id="card-exp-year" 
+                            placeholder="25"
+                            maxlength="2"
+                        >
+                    </div>
+                    <div class="card-input-col-small">
+                        <label for="card-cvv-full">CVV</label>
+                        <input 
+                            type="text" 
+                            id="card-cvv-full" 
+                            placeholder="123"
+                            maxlength="4"
+                        >
+                    </div>
+                </div>
+                <small class="card-fields-note">🔒 Campos directos</small>
             </div>
         </div>
         
-        <button id="verify-button" onclick="verifySelectedGate()" style="width: 100%; padding: 18px 24px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 12px; font-size: 18px; font-weight: 700; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); margin-top: 16px; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);">
+        <button id="verify-button" onclick="verifySelectedGate()">
             🔍 Verificar Tarjeta
         </button>
         
@@ -535,259 +457,96 @@
             <h3>Resultado</h3>
             <div id="result-content"></div>
         </div>
-
     </div>
 
-    <!-- Modal de Alerta Personalizado -->
-    <div id="maintenance-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); z-index: 1000; align-items: center; justify-content: center; animation: fadeIn 0.3s ease; flex-direction: column;">
-        <div style="background: linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(255, 255, 255, 0.95) 100%); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-radius: 20px; padding: 40px; max-width: 420px; width: 90%; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.2); animation: slideUpModal 0.4s ease-out; text-align: center;">
-            <div style="font-size: 64px; margin-bottom: 20px; animation: pulse 2s infinite;">⚠️</div>
-            <h2 style="color: #1a202c; font-size: 24px; font-weight: 700; margin-bottom: 12px; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
-                Gate in maintenance
-            </h2>
-            <p style="color: #4a5568; font-size: 16px; line-height: 1.6; margin-bottom: 30px;">
-                El gate <strong>Charged</strong> está actualmente en mantenimiento. El administrador lo ha desactivado temporalmente.
-            </p>
-            <p style="color: #718096; font-size: 14px; line-height: 1.5; margin-bottom: 30px;">
-                Por favor, usa el gate <strong>Auth</strong> o intenta más tarde.
-            </p>
-            <button onclick="closeMaintenanceModal()" style="width: 100%; padding: 14px 24px; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; border: none; border-radius: 12px; font-weight: 600; font-size: 16px; cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 12px rgba(240, 147, 251, 0.4);" onmouseover="this.style.transform='scale(1.02)'; this.style.boxShadow='0 6px 16px rgba(240, 147, 251, 0.6)';" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 4px 12px rgba(240, 147, 251, 0.4)';">
-                Entendido
-            </button>
+    <div id="maintenance-modal">
+        <div class="modal-content">
+            <div class="icon">⚠️</div>
+            <h2>Gate en mantenimiento</h2>
+            <p>El gate <strong>Charged</strong> está temporalmente desactivado.</p>
+            <p>Por favor, usa otro gate.</p>
+            <button onclick="closeMaintenanceModal()" class="modal-btn">Entendido</button>
         </div>
     </div>
 
     <script>
         let stripe = null;
-        let elements = null;
-        let cardElement = null;
         let verifyStartTime = null;
         let checksRemaining = 0;
 
-        // Funciones para el modal de mantenimiento
         function showMaintenanceModal() {
-            const modal = document.getElementById('maintenance-modal');
-            if (modal) {
-                modal.style.display = 'flex';
-            }
+            document.getElementById('maintenance-modal').style.display = 'flex';
         }
 
         function closeMaintenanceModal() {
-            const modal = document.getElementById('maintenance-modal');
-            if (modal) {
-                modal.style.display = 'none';
-            }
+            document.getElementById('maintenance-modal').style.display = 'none';
         }
 
-        // Cerrar modal al hacer click fuera
         document.addEventListener('DOMContentLoaded', function() {
             const modal = document.getElementById('maintenance-modal');
-            if (modal) {
-                modal.addEventListener('click', function(e) {
-                    if (e.target === modal) {
-                        closeMaintenanceModal();
-                    }
-                });
-            }
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) closeMaintenanceModal();
+            });
         });
 
-        // Función para cargar configuración del servidor
         async function loadStripeConfig() {
-            console.log('Cargando configuración de Stripe...');
             try {
                 const response = await fetch('/checker/get_config');
-                console.log('Respuesta recibida:', response.status);
+                if (!response.ok) throw new Error('Error al obtener configuración');
                 
-                if (!response.ok) {
-                    throw new Error('Error al obtener configuración: ' + response.status);
-                }
-                
-                // Verificar que la respuesta es JSON antes de parsear
                 const contentType = response.headers.get('content-type');
                 if (!contentType || !contentType.includes('application/json')) {
-                    const text = await response.text();
-                    console.error('Error: Respuesta no es JSON:', text.substring(0, 200));
-                    document.getElementById('stripe-status').innerHTML = '<span style="color: #ef4444;">❌ Error de servidor</span>';
-                    showResult('error', '❌ Error del servidor. El servidor no respondió con JSON válido. Verifica tu conexión.', {});
+                    document.getElementById('stripe-status').textContent = 'Error de servidor';
                     return;
                 }
                 
                 const data = await response.json();
-                console.log('Datos recibidos:', data);
                 
-                if (data.success && data.stripe_pk) {
-                    console.log('Configuración válida recibida');
-                    const initialized = initializeStripe(data.stripe_pk);
-                    if (initialized) {
-                        checksRemaining = data.checks_remaining || 0;
-                        document.getElementById('checks-remaining').textContent = checksRemaining;
-                        document.getElementById('stripe-status').innerHTML = '<span style="color: #10b981;">✅ Stripe on</span>';
-                        
-                        // Configurar gates disponibles dinámicamente
-                        const gates = data.gates || {};
-                        renderGates(gates);
-                        
-                        // Guardar estado de gates para validación después
-                        window.gatesConfig = gates;
-                        
-                        console.log('✅ Sistema listo para usar');
-                    } else {
-                        document.getElementById('stripe-status').innerHTML = '<span style="color: #ef4444;">❌ Error inicializando Stripe</span>';
+                if (data.success) {
+                    checksRemaining = data.checks_remaining || 0;
+                    document.getElementById('checks-remaining').textContent = checksRemaining;
+                    document.getElementById('stripe-status').textContent = '✅ Activo';
+                    
+                    const gates = data.gates || {};
+                    renderGates(gates);
+                    window.gatesConfig = gates;
+                    
+                    if (data.stripe_pk) {
+                        initializeStripe(data.stripe_pk);
                     }
                 } else {
-                    console.error('Configuración inválida:', data);
-                    document.getElementById('stripe-status').innerHTML = '<span style="color: #ef4444;">❌ Sin configuración</span>';
-                    showResult('error', '❌ Error: El administrador no ha configurado las claves de Stripe. Contacta al admin.', {});
+                    document.getElementById('stripe-status').textContent = 'Sin configuración';
                 }
             } catch (error) {
-                console.error('Error cargando configuración:', error);
-                document.getElementById('stripe-status').innerHTML = '<span style="color: #ef4444;">❌ Error de conexión</span>';
-                showResult('error', '❌ Error de conexión con el servidor: ' + error.message, {});
+                document.getElementById('stripe-status').textContent = 'Error de conexión';
             }
         }
 
         function initializeStripe(pkKey) {
-            if (!pkKey) {
-                console.error('No se proporcionó PK key');
-                showResult('error', '❌ Error: No se pudo obtener la clave de Stripe. Contacta al administrador.', {});
-                return false;
-            }
-            
-            console.log('Inicializando Stripe con PK:', pkKey.substring(0, 20) + '...');
-            
+            if (!pkKey) return true;
             try {
                 stripe = Stripe(pkKey);
-                elements = stripe.elements();
-                
-                cardElement = elements.create('card', {
-                    style: {
-                        base: {
-                            fontSize: '15px',
-                            color: '#1a202c',
-                            fontFamily: "'Inter', system-ui, sans-serif",
-                            '::placeholder': {
-                                color: '#a0aec0',
-                            },
-                        },
-                        invalid: {
-                            color: '#ef4444',
-                            iconColor: '#ef4444',
-                        },
-                    }
-                });
-                
-                cardElement.mount('#card-element');
-                
-                cardElement.on('change', function(event) {
-                    const displayError = document.getElementById('card-errors');
-                    if (event.error) {
-                        displayError.textContent = event.error.message;
-                    } else {
-                        displayError.textContent = '';
-                    }
-                });
-                
-                console.log('✅ Stripe inicializado correctamente');
                 return true;
             } catch (error) {
-                console.error('Error inicializando Stripe:', error);
-                showResult('error', '❌ Error inicializando Stripe: ' + error.message, {});
-                return false;
+                return true;
             }
         }
 
-        // Función para mostrar/ocultar campos según el gate seleccionado
         function toggleCardFields(selectedGate) {
-            try {
-                const container = document.getElementById('card-fields-container');
-                const stripeField = document.getElementById('stripe-card-field');
-                const braintreeFields = document.getElementById('braintree-card-fields');
-                
-                // Validar que los elementos existan
-                if (!container || !stripeField || !braintreeFields) {
-                    console.warn('Elementos de campos de tarjeta no encontrados');
-                    return;
-                }
-                
-                // Normalizar el valor del gate
-                const gate = (selectedGate || '').trim().toLowerCase();
-                
-                // Guardar posición de scroll antes de cambios (más preciso)
-                const scrollPosition = window.pageYOffset || 
-                                     document.documentElement.scrollTop || 
-                                     document.body.scrollTop || 
-                                     0;
-                
-                // Usar requestAnimationFrame para evitar cambios durante el reflow
-                requestAnimationFrame(() => {
-                    // Usar visibility en lugar de display para evitar reflow
-                    if (!gate || gate === '') {
-                        // Ocultar todos los campos si no hay gate seleccionado
-                        container.style.visibility = 'hidden';
-                        container.style.height = '0';
-                        container.style.overflow = 'hidden';
-                        container.style.opacity = '0';
-                        stripeField.style.display = 'none';
-                        braintreeFields.style.display = 'none';
-                    } else {
-                        // Mostrar contenedor
-                        container.style.visibility = 'visible';
-                        container.style.height = 'auto';
-                        container.style.overflow = 'visible';
-                        container.style.opacity = '1';
-                        
-                        // Mostrar campos según el gate
-                        if (gate === 'braintree' || gate === 'charge') {
-                            // Braintree y Charge usan campos directos de tarjeta
-                            stripeField.style.display = 'none';
-                            braintreeFields.style.display = 'block';
-                        } else if (gate === 'auth') {
-                            // Auth usa Stripe Elements
-                            stripeField.style.display = 'block';
-                            braintreeFields.style.display = 'none';
-                        } else {
-                            // Gate desconocido, ocultar todo
-                            container.style.visibility = 'hidden';
-                            container.style.height = '0';
-                            container.style.overflow = 'hidden';
-                            container.style.opacity = '0';
-                            stripeField.style.display = 'none';
-                            braintreeFields.style.display = 'none';
-                        }
-                    }
-                    
-                    // Restaurar posición de scroll inmediatamente y varias veces para asegurar
-                    requestAnimationFrame(() => {
-                        window.scrollTo({
-                            top: scrollPosition,
-                            left: 0,
-                            behavior: 'instant'
-                        });
-                        
-                        // Doble verificación después de un pequeño delay
-                        setTimeout(() => {
-                            const currentScroll = window.pageYOffset || document.documentElement.scrollTop || 0;
-                            if (Math.abs(currentScroll - scrollPosition) > 1) {
-                                window.scrollTo({
-                                    top: scrollPosition,
-                                    left: 0,
-                                    behavior: 'instant'
-                                });
-                            }
-                        }, 50);
-                    });
-                });
-            } catch (error) {
-                console.error('Error en toggleCardFields:', error);
+            const container = document.getElementById('card-fields-container');
+            if (!container) return;
+            
+            if (!selectedGate || selectedGate === '') {
+                container.style.display = 'none';
+            } else {
+                container.style.display = 'block';
             }
         }
         
-        // Función para renderizar gates en el selector
         function renderGates(gates) {
             const selector = document.getElementById('gate-selector');
             const errorDiv = document.getElementById('gate-selector-error');
             
-            // Limpiar opciones existentes (excepto la primera)
             while (selector.children.length > 1) {
                 selector.removeChild(selector.lastChild);
             }
@@ -802,7 +561,6 @@
                 const name = gateConfig.name || gateId;
                 const description = gateConfig.description || '';
                 
-                // Crear opción
                 const option = document.createElement('option');
                 option.value = gateId;
                 option.textContent = `${icon} ${name}${description ? ` - ${description}` : ''}`;
@@ -817,9 +575,8 @@
                 selector.appendChild(option);
             }
             
-            // Mostrar mensaje si no hay gates disponibles
             if (enabledGatesCount === 0) {
-                errorDiv.textContent = '⚠️ No hay gates disponibles en este momento.';
+                errorDiv.textContent = '⚠️ No hay gates disponibles';
                 errorDiv.style.display = 'block';
                 selector.disabled = true;
             } else {
@@ -827,54 +584,23 @@
                 selector.disabled = false;
             }
             
-            // Añadir event listener para mostrar/ocultar campos cuando cambie la selección (solo una vez)
             if (!selector.hasAttribute('data-listener-added')) {
-                let isUpdating = false;
                 selector.addEventListener('change', function(e) {
-                    // Prevenir comportamiento por defecto que puede causar scroll
-                    e.preventDefault();
-                    e.stopPropagation();
-                    
-                    // Evitar múltiples llamadas simultáneas
-                    if (isUpdating) return;
-                    isUpdating = true;
-                    
-                    // Guardar posición de scroll ANTES de cualquier cambio
-                    const scrollPos = window.pageYOffset || document.documentElement.scrollTop || 0;
-                    
-                    const selectedValue = (e.target.value || '').trim();
-                    
-                    // Usar requestAnimationFrame para cambios suaves sin scroll
-                    requestAnimationFrame(() => {
-                        toggleCardFields(selectedValue);
-                        
-                        // Restaurar posición de scroll inmediatamente después
-                        requestAnimationFrame(() => {
-                            window.scrollTo({
-                                top: scrollPos,
-                                left: 0,
-                                behavior: 'instant'
-                            });
-                            isUpdating = false;
-                        });
-                    });
-                }, { passive: false });
+                    toggleCardFields(e.target.value);
+                });
                 selector.setAttribute('data-listener-added', 'true');
             }
             
-            // Asegurar que los campos estén ocultos inicialmente o reflejen el valor actual
-            const currentValue = selector.value || '';
-            toggleCardFields(currentValue);
+            toggleCardFields(selector.value);
         }
         
-        // Función para verificar el gate seleccionado
         function verifySelectedGate() {
             const selector = document.getElementById('gate-selector');
             const selectedGate = selector.value;
             
             if (!selectedGate) {
                 const errorDiv = document.getElementById('gate-selector-error');
-                errorDiv.textContent = '⚠️ Por favor, selecciona un gate antes de verificar.';
+                errorDiv.textContent = '⚠️ Selecciona un gate';
                 errorDiv.style.display = 'block';
                 return;
             }
@@ -883,7 +609,6 @@
         }
 
         async function verifyCard(mode = 'auth') {
-            // Verificar si el gate está habilitado
             const gatesConfig = window.gatesConfig || {};
             const gateConfig = gatesConfig[mode];
             
@@ -891,17 +616,16 @@
                 if (mode === 'charge') {
                     showMaintenanceModal();
                 } else {
-                    showResult('error', `⚠️ Gate ${gateConfig?.name || mode} está actualmente en mantenimiento.`, {});
+                    showResult('error', `⚠️ Gate ${gateConfig?.name || mode} en mantenimiento`, {});
                 }
                 return;
             }
 
             if (checksRemaining <= 0) {
-                showResult('error', '❌ Has alcanzado el límite de checks de tu key. Contacta al administrador para obtener una nueva key o aumentar tu límite.', {});
+                showResult('error', '❌ Límite de checks alcanzado', {});
                 return;
             }
 
-            // Deshabilitar selector y botón durante la verificación
             const selector = document.getElementById('gate-selector');
             const verifyButton = document.getElementById('verify-button');
             selector.disabled = true;
@@ -915,407 +639,96 @@
             verifyStartTime = Date.now();
 
             try {
-                // Gate Auth - usa Stripe Elements
-                if (mode === 'auth') {
-                    if (!stripe || !cardElement) {
-                        showResult('error', 'Error: Stripe no está inicializado correctamente.', {});
-                        return;
-                    }
-                    
-                    const { paymentMethod, error } = await stripe.createPaymentMethod({
-                        type: 'card',
-                        card: cardElement,
-                    });
-
-                    if (error) {
-                        showResult('error', `Error: ${error.message}`, {});
-                        return;
-                    }
-
-                    const response = await fetch('/checker/verify_auth', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                            payment_method_id: paymentMethod.id
-                        })
-                    });
-
-                    // Verificar que la respuesta es JSON antes de parsear
-                    const contentType = response.headers.get('content-type');
-                    if (!contentType || !contentType.includes('application/json')) {
-                        const text = await response.text();
-                        console.error('Error: Respuesta no es JSON:', text.substring(0, 500));
-                        console.error('Status:', response.status, 'StatusText:', response.statusText);
-                        
-                        let errorMsg = '❌ Error del servidor. El servidor no respondió con JSON válido.';
-                        if (response.status === 429) {
-                            errorMsg = '❌ Demasiadas solicitudes. Por favor espera un momento e intenta nuevamente.';
-                        } else if (response.status === 401 || response.status === 403) {
-                            errorMsg = '❌ Error de autenticación. Por favor, recarga la página.';
-                        } else if (response.status >= 500) {
-                            errorMsg = '❌ Error del servidor. Por favor, intenta nuevamente más tarde.';
-                        }
-                        
-                        showResult('error', errorMsg, {});
-                        return;
-                    }
-                    
-                    var responseData;
-                    try {
-                        responseData = await response.json();
-                    } catch (jsonError) {
-                        console.error('Error parseando JSON:', jsonError);
-                        console.error('Respuesta recibida:', await response.text());
-                        showResult('error', '❌ Error al procesar la respuesta del servidor. Por favor, intenta nuevamente.', {});
-                        return;
-                    }
-                } else if (mode === 'charge') {
-                    // Gate Charge - requiere datos directos de tarjeta (usando campos de Braintree o Stripe)
-                    const cardNumberFull = document.getElementById('card-number-full')?.value.trim().replace(/\s+/g, '').replace(/-/g, '') || '';
-                    const expMonth = document.getElementById('card-exp-month')?.value.trim() || '';
-                    const expYear = document.getElementById('card-exp-year')?.value.trim() || '';
-                    const cvvFull = document.getElementById('card-cvv-full')?.value.trim() || '';
-                    
-                    // Validar datos requeridos para Charge
-                    if (!cardNumberFull || cardNumberFull.length < 13) {
-                        showResult('error', '❌ Por favor, ingresa el número completo de tarjeta.', {});
-                        return;
-                    }
-                    
-                    if (!expMonth || !expYear) {
-                        showResult('error', '❌ Por favor, ingresa el mes y año de expiración (MM YY).', {});
-                        return;
-                    }
-                    
-                    if (!cvvFull) {
-                        showResult('error', '❌ Por favor, ingresa el CVV.', {});
-                        return;
-                    }
-                    
-                    // Llamar al endpoint de Charge
-                    const response = await fetch('/checker/verify_charge', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                            card_number: cardNumberFull,
-                            exp_month: expMonth,
-                            exp_year: expYear,
-                            cvv: cvvFull
-                        })
-                    });
-                    
-                    // Verificar que la respuesta es JSON
-                    const contentType = response.headers.get('content-type');
-                    if (!contentType || !contentType.includes('application/json')) {
-                        const text = await response.text();
-                        console.error('Error: Respuesta no es JSON:', text.substring(0, 500));
-                        console.error('Status:', response.status, 'StatusText:', response.statusText);
-                        
-                        let errorMsg = '❌ Error del servidor. El servidor no respondió con JSON válido.';
-                        if (response.status === 429) {
-                            errorMsg = '❌ Demasiadas solicitudes. Por favor espera un momento e intenta nuevamente.';
-                        } else if (response.status === 401 || response.status === 403) {
-                            errorMsg = '❌ Error de autenticación. Por favor, recarga la página.';
-                        } else if (response.status >= 500) {
-                            errorMsg = '❌ Error del servidor. Por favor, intenta nuevamente más tarde.';
-                        }
-                        
-                        showResult('error', errorMsg, {});
-                        return;
-                    }
-                    
-                    var responseData;
-                    try {
-                        responseData = await response.json();
-                    } catch (jsonError) {
-                        console.error('Error parseando JSON:', jsonError);
-                        console.error('Respuesta recibida:', await response.text());
-                        showResult('error', '❌ Error al procesar la respuesta del servidor. Por favor, intenta nuevamente.', {});
-                        return;
-                    }
-                } else if (mode === 'braintree') {
-                    // Gate Braintree - requiere datos directos de tarjeta
-                    const cardNumberFull = document.getElementById('card-number-full')?.value.trim().replace(/\s+/g, '').replace(/-/g, '') || '';
-                    const expMonth = document.getElementById('card-exp-month')?.value.trim() || '';
-                    const expYear = document.getElementById('card-exp-year')?.value.trim() || '';
-                    const cvvFull = document.getElementById('card-cvv-full')?.value.trim() || '';
-                    
-                    // Validar datos requeridos para Braintree
-                    if (!cardNumberFull || cardNumberFull.length < 13) {
-                        showResult('error', '❌ Por favor, ingresa el número completo de tarjeta.', {});
-                        return;
-                    }
-                    
-                    if (!expMonth || !expYear) {
-                        showResult('error', '❌ Por favor, ingresa el mes y año de expiración (MM YY).', {});
-                        return;
-                    }
-                    
-                    if (!cvvFull) {
-                        showResult('error', '❌ Por favor, ingresa el CVV.', {});
-                        return;
-                    }
-                    
-                    // Llamar al endpoint de Braintree
-                    const response = await fetch('/checker/verify_braintree', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                            card_number: cardNumberFull,
-                            exp_month: expMonth,
-                            exp_year: expYear,
-                            cvv: cvvFull
-                        })
-                    });
-                    
-                    // Verificar que la respuesta es JSON
-                    const contentType = response.headers.get('content-type');
-                    if (!contentType || !contentType.includes('application/json')) {
-                        const text = await response.text();
-                        console.error('Error: Respuesta no es JSON:', text.substring(0, 500));
-                        console.error('Status:', response.status, 'StatusText:', response.statusText);
-                        
-                        let errorMsg = '❌ Error del servidor. El servidor no respondió con JSON válido.';
-                        if (response.status === 429) {
-                            errorMsg = '❌ Demasiadas solicitudes. Por favor espera un momento e intenta nuevamente.';
-                        } else if (response.status === 401 || response.status === 403) {
-                            errorMsg = '❌ Error de autenticación. Por favor, recarga la página.';
-                        } else if (response.status >= 500) {
-                            errorMsg = '❌ Error del servidor. Por favor, intenta nuevamente más tarde.';
-                        }
-                        
-                        showResult('error', errorMsg, {});
-                        return;
-                    }
-                    
-                    var responseData;
-                    try {
-                        responseData = await response.json();
-                    } catch (jsonError) {
-                        console.error('Error parseando JSON:', jsonError);
-                        console.error('Respuesta recibida:', await response.text());
-                        showResult('error', '❌ Error al procesar la respuesta del servidor. Por favor, intenta nuevamente.', {});
-                        return;
-                    }
-                } else {
-                    // Gate desconocido
-                    showResult('error', `❌ Gate ${mode} no está configurado correctamente.`, {});
+                const cardNumberFull = document.getElementById('card-number-full')?.value.trim().replace(/\s+/g, '').replace(/-/g, '') || '';
+                const expMonth = document.getElementById('card-exp-month')?.value.trim() || '';
+                const expYear = document.getElementById('card-exp-year')?.value.trim() || '';
+                const cvvFull = document.getElementById('card-cvv-full')?.value.trim() || '';
+                
+                if (!cardNumberFull || cardNumberFull.length < 13) {
+                    showResult('error', '❌ Ingresa el número de tarjeta', {});
                     return;
                 }
                 
-                // Procesar respuesta (común para todos los gates)
-                if (!responseData) {
-                    console.error('responseData es null o undefined');
-                    showResult('error', '❌ No se recibió respuesta del servidor. Por favor, intenta nuevamente.', {});
+                if (!expMonth || !expYear) {
+                    showResult('error', '❌ Ingresa la fecha de expiración', {});
                     return;
                 }
                 
-                const data = responseData;
+                if (!cvvFull) {
+                    showResult('error', '❌ Ingresa el CVV', {});
+                    return;
+                }
                 
+                let endpoint = '/checker/verify_auth';
+                if (mode === 'charge') endpoint = '/checker/verify_charge';
+                else if (mode === 'stripe_auth') endpoint = '/checker/verify_stripe_auth';
+                else if (mode === 'braintree') endpoint = '/checker/verify_braintree';
+                
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        card_number: cardNumberFull,
+                        exp_month: expMonth,
+                        exp_year: expYear,
+                        cvv: cvvFull
+                    })
+                });
+
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    let errorMsg = '❌ Error del servidor';
+                    if (response.status === 429) errorMsg = '❌ Demasiadas solicitudes';
+                    else if (response.status === 401 || response.status === 403) errorMsg = '❌ Error de autenticación';
+                    else if (response.status >= 500) errorMsg = '❌ Gateway no disponible';
+                    showResult('error', errorMsg, {});
+                    return;
+                }
+                
+                const data = await response.json();
                 const verifyTime = ((Date.now() - verifyStartTime) / 1000).toFixed(2);
 
                 if (data && data.success) {
                     checksRemaining = data.checks_remaining || 0;
                     document.getElementById('checks-remaining').textContent = checksRemaining;
                     
-                    const cardInfo = data.details?.card || {};
-                    const bin = String(cardInfo.bin || '').trim();
-                    const last4 = String(cardInfo.last4 || '').trim();
-                    
-                    let reconstructedNumber = '';
-                    if (bin && bin.length >= 6 && last4 && last4.length === 4) {
-                        const bin6 = bin.substring(0, 6);
-                        reconstructedNumber = bin6 + '******' + last4;
-                    } else if (last4 && last4.length === 4) {
-                        reconstructedNumber = '****' + '****' + '****' + last4;
-                    } else {
-                        reconstructedNumber = '************' + (last4 || '****');
-                    }
-                    
                     const binInfo = data.details?.bin_info || null;
-                    
                     showResult('approved', data.message, data.details || {}, verifyTime, binInfo);
-                    
                 } else {
-                    // Actualizar checks restantes incluso en error
                     if (data.checks_remaining !== undefined) {
                         checksRemaining = data.checks_remaining;
                         document.getElementById('checks-remaining').textContent = checksRemaining;
                     }
                     
-                    // SIEMPRE generar un mensaje de error útil, incluso si el backend no lo proporciona
-                    const errorType = data.details?.type || data.status || 'unknown';
-                    let errorMsg = '';
+                    let errorMsg = data.error || data.message || 'Error al verificar';
+                    if (!errorMsg.startsWith('❌')) errorMsg = '❌ ' + errorMsg;
                     
-                    // Prioridad 1: data.error (si no es "Error desconocido")
-                    if (data.error && data.error.trim() !== '' && !data.error.toLowerCase().includes('desconocido')) {
-                        errorMsg = data.error;
-                    }
-                    // Prioridad 2: data.message (si no es "Error desconocido")
-                    else if (data.message && data.message.trim() !== '' && !data.message.toLowerCase().includes('desconocido')) {
-                        errorMsg = data.message;
-                    }
-                    // Prioridad 3: details.message
-                    else if (data.details?.message && data.details.message.trim() !== '') {
-                        errorMsg = data.details.message;
-                    }
-                    // Prioridad 4: Tipo de error conocido
-                    else if (errorType === 'cvv_error' || errorType === 'incorrect_cvc') {
-                        errorMsg = 'CVV INCORRECTO';
-                    } else if (errorType === 'card_number_error' || errorType === 'incorrect_number' || errorType === 'invalid_number') {
-                        errorMsg = 'NÚMERO DE TARJETA INVÁLIDO';
-                    } else if (errorType === 'expired_card') {
-                        errorMsg = 'TARJETA EXPIRADA';
-                    } else if (errorType === 'card_declined' || errorType === 'declined') {
-                        errorMsg = 'PAGO RECHAZADO';
-                    } 
-                    // Prioridad 5: Status
-                    else if (data.status === 'declined') {
-                        errorMsg = 'TARJETA RECHAZADA';
-                    } else if (data.status === 'error') {
-                        errorMsg = 'Error en el procesamiento de la tarjeta';
-                    } else if (data.status === 'maintenance') {
-                        errorMsg = 'Gate en mantenimiento';
-                    }
-                    // Prioridad 6: Construir mensaje desde información disponible
-                    else {
-                        console.error('No se pudo extraer mensaje útil. Data completo:', JSON.stringify(data, null, 2));
-                        const parts = [];
-                        if (data.status) parts.push(data.status);
-                        if (errorType && errorType !== 'unknown') parts.push(errorType);
-                        errorMsg = parts.length > 0 ? `Error: ${parts.join(' - ')}` : 'Error al verificar la tarjeta. Por favor, intenta nuevamente.';
-                    }
-                    
-                    // NUNCA mostrar "Error desconocido" - siempre mostrar algo útil
-                    if (!errorMsg || errorMsg.trim() === '' || errorMsg.toLowerCase().includes('desconocido')) {
-                        errorMsg = 'Error al verificar la tarjeta. Por favor, intenta nuevamente.';
-                    }
-                    
-                    // Asegurar que el mensaje tenga el emoji
-                    if (!errorMsg.startsWith('❌') && !errorMsg.startsWith('⚠️')) {
-                        errorMsg = '❌ ' + errorMsg;
-                    }
-                    
-                    console.log('Mostrando error al usuario:', errorMsg, 'Status:', data.status, 'Type:', errorType);
                     showResult(data.status === 'declined' ? 'declined' : 'error', errorMsg, data.details || {});
                 }
 
             } catch (error) {
-                console.error('Error completo en verificación:', error);
-                console.error('Tipo de error:', typeof error);
-                console.error('Nombre del error:', error?.name);
-                console.error('Stack:', error?.stack);
-                
-                let errorMessage = '❌ Error inesperado';
-                
-                // Manejar diferentes tipos de errores
-                if (error) {
-                    // Si es un error de red
-                    if (error.name === 'TypeError' && (error.message.includes('fetch') || error.message.includes('NetworkError'))) {
-                        errorMessage = '❌ Error de conexión. Verifica tu internet y vuelve a intentar.';
-                    }
-                    // Si es un error de JSON
-                    else if (error.message && (error.message.includes('Unexpected token') || error.message.includes('JSON') || error.message.includes('parse'))) {
-                        errorMessage = '❌ Error: El servidor respondió con un formato inválido. Verifica tu sesión y recarga la página.';
-                    }
-                    // Si es un timeout
-                    else if (error.message && (error.message.includes('timeout') || error.message.includes('Timeout') || error.message.includes('aborted'))) {
-                        errorMessage = '❌ Tiempo de espera agotado. El servidor está tardando demasiado en responder.';
-                    }
-                    // Si tiene un mensaje útil
-                    else if (error.message && error.message !== 'Error desconocido' && error.message !== '[object Object]') {
-                        errorMessage = `❌ ${error.message}`;
-                    }
-                    // Si se puede convertir a string
-                    else if (error.toString && error.toString() !== '[object Object]' && error.toString() !== 'Error') {
-                        errorMessage = `❌ ${error.toString()}`;
-                    }
-                    // Si es un objeto con propiedades
-                    else if (typeof error === 'object') {
-                        const errorKeys = Object.keys(error);
-                        if (errorKeys.length > 0) {
-                            errorMessage = `❌ Error: ${JSON.stringify(error).substring(0, 200)}`;
-                        } else {
-                            errorMessage = '❌ Error inesperado. Por favor, verifica tu conexión e intenta nuevamente. Si el problema persiste, contacta al administrador.';
-                        }
-                    }
-                    else {
-                        errorMessage = '❌ Error inesperado. Por favor, verifica tu conexión e intenta nuevamente. Si el problema persiste, contacta al administrador.';
-                    }
-                }
-                
-                console.error('Mostrando mensaje de error al usuario:', errorMessage);
-                showResult('error', errorMessage, {});
+                showResult('error', '❌ Error de conexión', {});
             } finally {
-                // Re-habilitar selector y botón
-                const selector = document.getElementById('gate-selector');
-                const verifyButton = document.getElementById('verify-button');
-                const gatesConfig = window.gatesConfig || {};
-                
-                // Re-habilitar selector solo si hay gates habilitados
-                let hasEnabledGates = false;
-                for (const [gateId, gateConfig] of Object.entries(gatesConfig)) {
-                    if (gateConfig && gateConfig.enabled !== false) {
-                        hasEnabledGates = true;
-                        break;
-                    }
-                }
-                
-                if (selector) {
-                    selector.disabled = !hasEnabledGates;
-                    // Restaurar el estado de los campos según el gate seleccionado
-                    const selectedGate = selector.value;
-                    if (selectedGate) {
-                        toggleCardFields(selectedGate);
-                    } else {
-                        toggleCardFields('');
-                    }
-                }
-                if (verifyButton) {
-                    verifyButton.disabled = false;
-                }
-                if (loading) {
-                    loading.style.display = 'none';
-                }
+                selector.disabled = false;
+                verifyButton.disabled = false;
+                loading.style.display = 'none';
             }
         }
 
         function getCountryEmoji(code) {
             if (!code) return '🌍';
-            const codeStr = String(code).toUpperCase();
             const emojis = {
-                'US': '🇺🇸', 'CA': '🇨🇦', 'GB': '🇬🇧', 'MX': '🇲🇽', 'BR': '🇧🇷',
-                'AR': '🇦🇷', 'ES': '🇪🇸', 'FR': '🇫🇷', 'DE': '🇩🇪', 'IT': '🇮🇹',
-                'JP': '🇯🇵', 'CN': '🇨🇳', 'AU': '🇦🇺', 'IN': '🇮🇳', 'RU': '🇷🇺',
-                'DK': '🇩🇰', 'SE': '🇸🇪', 'NO': '🇳🇴', 'FI': '🇫🇮', 'NL': '🇳🇱',
-                'BE': '🇧🇪', 'CH': '🇨🇭', 'AT': '🇦🇹', 'PT': '🇵🇹', 'GR': '🇬🇷',
-                'IE': '🇮🇪', 'PL': '🇵🇱', 'CZ': '🇨🇿', 'HU': '🇭🇺', 'RO': '🇷🇴',
-                'MY': '🇲🇾', 'SG': '🇸🇬', 'TH': '🇹🇭', 'ID': '🇮🇩', 'PH': '🇵🇭',
-                'VN': '🇻🇳', 'KR': '🇰🇷', 'CO': '🇨🇴', 'PE': '🇵🇪', 'CL': '🇨🇱'
+                'US': '🇺🇸', 'CA': '🇨🇦', 'GB': '🇬🇧', 'MX': '🇲🇽', 'BR': '🇧🇷'
             };
-            return emojis[codeStr] || '🌍';
+            return emojis[code.toUpperCase()] || '🌍';
         }
 
         function getCountryName(code) {
             if (!code) return 'Desconocido';
-            const codeStr = String(code).toUpperCase();
             const countries = {
-                'US': 'Estados Unidos', 'CA': 'Canadá', 'GB': 'Reino Unido', 'MX': 'México', 'BR': 'Brasil',
-                'AR': 'Argentina', 'ES': 'España', 'FR': 'Francia', 'DE': 'Alemania', 'IT': 'Italia',
-                'JP': 'Japón', 'CN': 'China', 'AU': 'Australia', 'IN': 'India', 'RU': 'Rusia',
-                'DK': 'Dinamarca', 'SE': 'Suecia', 'NO': 'Noruega', 'FI': 'Finlandia', 'NL': 'Países Bajos',
-                'BE': 'Bélgica', 'CH': 'Suiza', 'AT': 'Austria', 'PT': 'Portugal', 'GR': 'Grecia',
-                'IE': 'Irlanda', 'PL': 'Polonia', 'CZ': 'República Checa', 'HU': 'Hungría', 'RO': 'Rumania',
-                'MY': 'Malasia', 'SG': 'Singapur', 'TH': 'Tailandia', 'ID': 'Indonesia', 'PH': 'Filipinas',
-                'VN': 'Vietnam', 'KR': 'Corea del Sur', 'CO': 'Colombia', 'PE': 'Perú', 'CL': 'Chile'
+                'US': 'Estados Unidos', 'CA': 'Canadá', 'GB': 'Reino Unido', 'MX': 'México', 'BR': 'Brasil'
             };
-            return countries[codeStr] || code;
+            return countries[code.toUpperCase()] || code;
         }
 
         function showResult(type, message, details, verifyTime = '0.00', binInfo = null) {
@@ -1327,190 +740,50 @@
             
             let detailsHtml = '';
             
-            // Si está aprobada, mostrar información detallada
             if (type === 'approved' && details.card) {
                 const card = details.card;
                 const brand = (card.brand || 'Unknown').toUpperCase();
-                const cardType = (card.type || 'credit').toUpperCase();
                 const last4 = card.last4 || '****';
                 const country = card.country || 'N/A';
                 
-                // Obtener info del país desde binInfo
-                let countryName = getCountryName(country); // Convertir código a nombre
+                let countryName = getCountryName(country);
                 let countryEmoji = getCountryEmoji(country);
                 
                 if (binInfo && binInfo.country) {
-                    // Extraer país desde binInfo (tiene prioridad)
                     if (typeof binInfo.country === 'object') {
-                        countryName = binInfo.country.name || getCountryName(country);
-                        countryEmoji = binInfo.country.emoji || getCountryEmoji(country);
-                    } else if (typeof binInfo.country === 'string') {
-                        countryName = binInfo.country;
-                    }
-                }
-                
-                // Determinar el modo de verificación
-                const verifyMode = details.mode || 'auth';
-                const modeText = verifyMode === 'charge' ? 'CHARGED' : 'AUTH';
-                const modeIcon = verifyMode === 'charge' ? '💳' : '🔓';
-                
-                // Determinar el texto del tipo de tarjeta (evitar duplicados)
-                let typeText = brand;
-                
-                // Si cardType es igual a brand, solo mostrar brand
-                // Si cardType es CREDIT, DEBIT, PREPAID, etc., añadirlo
-                // Si cardType es diferente y no es una marca de tarjeta conocida, añadirlo
-                const knownBrands = ['VISA', 'MASTERCARD', 'AMEX', 'AMERICAN EXPRESS', 'DISCOVER', 'JCB', 'DINERS CLUB', 'UNIONPAY'];
-                const isKnownBrand = knownBrands.includes(cardType);
-                
-                if (cardType && cardType !== brand) {
-                    if (isKnownBrand) {
-                        // Si cardType es una marca conocida diferente, usar solo brand
-                        typeText = brand;
-                    } else if (cardType === 'CREDIT' || cardType === 'DEBIT' || cardType === 'PREPAID') {
-                        // Si es un tipo (CREDIT/DEBIT/PREPAID), añadirlo
-                        typeText = `${brand} ${cardType}`;
-                    } else if (cardType !== 'UNKNOWN') {
-                        // Si es otro tipo diferente, añadirlo
-                        typeText = `${brand} ${cardType}`;
+                        countryName = binInfo.country.name || countryName;
+                        countryEmoji = binInfo.country.emoji || countryEmoji;
                     }
                 }
                 
                 detailsHtml += `
-                    <div style="margin-top: 16px; padding: 20px; background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%); border-radius: 12px; border: 2px solid #10b981;">
-                        <div style="font-size: 18px; font-weight: 700; color: #065f46; margin-bottom: 16px; text-align: center;">
-                            ✅ TARJETA VERIFICADA EXITOSAMENTE
+                    <div style="margin-top: 12px; padding: 14px; background: rgba(46, 160, 67, 0.1); border-radius: 6px; border: 1px solid rgba(46, 160, 67, 0.3);">
+                        <div style="font-size: 14px; font-weight: 600; margin-bottom: 12px; text-align: center;">
+                            ✅ VERIFICADA
                         </div>
-                        <div style="background: rgba(255,255,255,0.7); padding: 16px; border-radius: 8px; font-size: 13px; color: #065f46;">
-                            <div style="margin-bottom: 10px;">
-                                <strong>🔢 Últimos 4 dígitos:</strong> •••• ${last4}
+                        <div style="font-size: 13px;">
+                            <div style="margin-bottom: 6px;">
+                                <strong>Últimos 4:</strong> •••• ${last4}
                             </div>
-                            <div style="margin-bottom: 10px;">
-                                <strong>💳 Tipo:</strong> ${typeText}
+                            <div style="margin-bottom: 6px;">
+                                <strong>Tipo:</strong> ${brand}
                             </div>
-                            <div style="margin-bottom: 10px;">
-                                <strong>🌍 País:</strong> ${countryName} ${countryEmoji}
+                            <div style="margin-bottom: 6px;">
+                                <strong>País:</strong> ${countryName} ${countryEmoji}
                             </div>
-                            <div style="margin-bottom: 0;">
-                                <strong>⏱️ Tiempo:</strong> ${verifyTime}s
+                            <div>
+                                <strong>Tiempo:</strong> ${verifyTime}s
                             </div>
                         </div>
                     </div>
                 `;
             }
             
-            if (details.code) {
-                detailsHtml = `<div class="error-details">
-                    <strong>Código de Error:</strong> <span class="error-code">${details.code}</span>
-                </div>` + detailsHtml;
-            }
-            
             resultContent.innerHTML = `<div class="result-item ${className}">${message}${detailsHtml}</div>`;
             results.style.display = 'block';
         }
         
-        // Función para actualizar solo el estado de los gates (sin recargar todo)
-        let updateGatesStatusInterval = null;
-        let lastUpdateGatesError = null;
-        
-        async function updateGatesStatus() {
-            try {
-                const response = await fetch('/checker/get_config');
-                
-                // Si hay rate limit, detener las actualizaciones automáticas temporalmente
-                if (response.status === 429) {
-                    console.warn('Rate limit alcanzado en updateGatesStatus, pausando actualizaciones automáticas');
-                    lastUpdateGatesError = Date.now();
-                    
-                    // Detener el intervalo temporalmente
-                    if (updateGatesStatusInterval) {
-                        clearInterval(updateGatesStatusInterval);
-                        updateGatesStatusInterval = null;
-                    }
-                    
-                    // Reanudar después de 2 minutos
-                    setTimeout(() => {
-                        if (!updateGatesStatusInterval) {
-                            updateGatesStatusInterval = setInterval(updateGatesStatus, 30000);
-                        }
-                    }, 120000); // 2 minutos
-                    return;
-                }
-                
-                if (!response.ok) return;
-                
-                const contentType = response.headers.get('content-type');
-                if (!contentType || !contentType.includes('application/json')) {
-                    return;
-                }
-                
-                const data = await response.json();
-                
-                // Si hay error de rate limit en el JSON, también detener
-                if (!data.success && data.error && data.error.includes('Demasiadas solicitudes')) {
-                    console.warn('Rate limit detectado en respuesta JSON, pausando actualizaciones');
-                    lastUpdateGatesError = Date.now();
-                    
-                    if (updateGatesStatusInterval) {
-                        clearInterval(updateGatesStatusInterval);
-                        updateGatesStatusInterval = null;
-                    }
-                    
-                    setTimeout(() => {
-                        if (!updateGatesStatusInterval) {
-                            updateGatesStatusInterval = setInterval(updateGatesStatus, 30000);
-                        }
-                    }, 120000);
-                    return;
-                }
-                
-                if (data.success && data.gates) {
-                    const gates = data.gates || {};
-                    const currentSelected = document.getElementById('gate-selector').value;
-                    
-                    // Re-renderizar el selector con los nuevos estados
-                    renderGates(gates);
-                    
-                    // Restaurar la selección anterior si todavía está disponible y habilitada
-                    const selector = document.getElementById('gate-selector');
-                    if (currentSelected && gates[currentSelected] && gates[currentSelected].enabled !== false) {
-                        selector.value = currentSelected;
-                        // Asegurar que los campos se muestren correctamente
-                        toggleCardFields(currentSelected);
-                    } else {
-                        // Si el gate anterior ya no está disponible, ocultar campos
-                        toggleCardFields('');
-                    }
-                    
-                    // Actualizar configuración global
-                    window.gatesConfig = gates;
-                    
-                    // Actualizar checks restantes también
-                    if (data.checks_remaining !== undefined) {
-                        checksRemaining = data.checks_remaining;
-                        document.getElementById('checks-remaining').textContent = checksRemaining;
-                    }
-                    
-                    // Resetear error si fue exitoso
-                    lastUpdateGatesError = null;
-                }
-            } catch (error) {
-                console.error('Error actualizando estado de gates:', error);
-            }
-        }
-        
-
-        // Cargar configuración al iniciar
         loadStripeConfig();
-        
-        // Actualizar estado de gates cada 60 segundos (reducido aún más para evitar rate limiting)
-        // Solo iniciar si no hay error reciente
-        setTimeout(() => {
-            if (!updateGatesStatusInterval) {
-                updateGatesStatusInterval = setInterval(updateGatesStatus, 60000);  // 60 segundos (1 minuto)
-            }
-        }, 10000);  // Esperar 10 segundos después de cargar la página
     </script>
 </body>
 </html>
-

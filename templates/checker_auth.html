@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Snoop Dogg Checker - Beta Cerrada</title>
+    <title>Dark Checker - Access</title>
     <style>
         * {
             margin: 0;
@@ -12,177 +12,211 @@
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            background: #0d1117;
             min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
             padding: 20px;
+            color: #c9d1d9;
         }
 
         .auth-container {
-            background: rgba(255, 255, 255, 0.95);
+            background: #161b22;
             padding: 40px;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            max-width: 450px;
+            border-radius: 12px;
+            border: 1px solid #30363d;
+            max-width: 440px;
             width: 100%;
-            backdrop-filter: blur(10px);
         }
 
         .auth-header {
             text-align: center;
-            margin-bottom: 30px;
+            margin-bottom: 32px;
+        }
+
+        .logo {
+            width: 56px;
+            height: 56px;
+            margin: 0 auto 16px;
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 30px;
         }
 
         .auth-header h1 {
-            color: #667eea;
-            font-size: 32px;
-            margin-bottom: 10px;
+            font-size: 24px;
+            font-weight: 600;
+            color: #f0f6fc;
+            margin-bottom: 6px;
         }
 
         .auth-header .subtitle {
-            color: #666;
-            font-size: 16px;
-            margin-bottom: 5px;
+            color: #8b949e;
+            font-size: 14px;
         }
 
         .auth-header .beta-badge {
             display: inline-block;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 6px 15px;
-            border-radius: 20px;
-            font-size: 12px;
+            background: rgba(245, 158, 11, 0.1);
+            border: 1px solid rgba(245, 158, 11, 0.2);
+            color: #f59e0b;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 11px;
             font-weight: 600;
-            margin-top: 10px;
+            margin-top: 12px;
+            text-transform: uppercase;
         }
 
         .form-group {
-            margin-bottom: 20px;
+            margin-bottom: 16px;
         }
 
         .form-group label {
             display: block;
-            color: #333;
-            font-weight: 600;
+            color: #f0f6fc;
+            font-weight: 500;
             margin-bottom: 8px;
+            font-size: 14px;
         }
 
         .form-group input {
             width: 100%;
-            padding: 14px 16px;
-            border: 2px solid #e0e0e0;
-            border-radius: 10px;
-            font-size: 16px;
-            font-family: 'Courier New', monospace;
-            transition: all 0.3s;
+            padding: 10px 12px;
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            font-size: 14px;
+            color: #f0f6fc;
+            transition: all 0.15s;
+            outline: none;
+        }
+
+        .form-group input::placeholder {
+            color: #8b949e;
+        }
+
+        .form-group input:hover {
+            border-color: #484f58;
         }
 
         .form-group input:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            border-color: #f59e0b;
+            background: #0d1117;
         }
 
         .btn-auth {
             width: 100%;
-            padding: 16px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            border-radius: 10px;
-            font-size: 16px;
+            padding: 10px;
+            background: linear-gradient(180deg, #f59e0b, #d97706);
+            color: #000;
+            border: 1px solid #b45309;
+            border-radius: 6px;
+            font-size: 14px;
             font-weight: 600;
             cursor: pointer;
-            transition: transform 0.2s;
+            transition: all 0.15s;
         }
 
         .btn-auth:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
-        }
-
-        .btn-auth:active {
-            transform: translateY(0);
+            background: linear-gradient(180deg, #fbbf24, #f59e0b);
         }
 
         .btn-auth:disabled {
-            opacity: 0.6;
+            opacity: 0.5;
             cursor: not-allowed;
-            transform: none;
+        }
+
+        .error-message, .success-message {
+            padding: 10px 12px;
+            border-radius: 6px;
+            margin-bottom: 16px;
+            display: none;
+            text-align: center;
+            font-size: 13px;
         }
 
         .error-message {
-            background: #fee2e2;
-            color: #991b1b;
-            padding: 12px 15px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            display: none;
-            text-align: center;
-            border: 1px solid #fca5a5;
+            background: rgba(248, 81, 73, 0.1);
+            border: 1px solid rgba(248, 81, 73, 0.3);
+            color: #ff7b72;
         }
 
         .success-message {
-            background: #d1fae5;
-            color: #065f46;
-            padding: 12px 15px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            display: none;
+            background: rgba(46, 160, 67, 0.1);
+            border: 1px solid rgba(46, 160, 67, 0.3);
+            color: #7ee787;
+        }
+
+        .features {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 24px;
+        }
+
+        .feature-item {
+            background: #0d1117;
+            padding: 16px 10px;
+            border-radius: 6px;
+            border: 1px solid #21262d;
             text-align: center;
-            border: 1px solid #6ee7b7;
+            transition: all 0.15s;
+        }
+
+        .feature-item:hover {
+            border-color: #30363d;
+        }
+
+        .feature-item .icon {
+            font-size: 26px;
+            margin-bottom: 6px;
+        }
+
+        .feature-item .text {
+            font-size: 12px;
+            color: #8b949e;
+            font-weight: 500;
         }
 
         .info-box {
-            background: #f0f9ff;
-            border: 1px solid #bae6fd;
-            padding: 15px;
-            border-radius: 10px;
+            background: rgba(56, 139, 253, 0.1);
+            border: 1px solid rgba(56, 139, 253, 0.2);
+            padding: 16px;
+            border-radius: 6px;
             margin-top: 20px;
             text-align: center;
         }
 
         .info-box .icon {
-            font-size: 24px;
+            font-size: 22px;
             margin-bottom: 8px;
         }
 
         .info-box p {
-            color: #0369a1;
+            color: #8b949e;
             font-size: 13px;
-            line-height: 1.5;
+            line-height: 1.4;
         }
 
-        .footer {
-            text-align: center;
-            margin-top: 25px;
-            padding-top: 20px;
-            border-top: 1px solid #e0e0e0;
-        }
-
-        .footer a {
-            color: #667eea;
-            text-decoration: none;
-            font-weight: 600;
-            font-size: 14px;
-        }
-
-        .footer a:hover {
-            text-decoration: underline;
+        .info-box strong {
+            color: #f0f6fc;
         }
 
         .loading {
             display: inline-block;
-            width: 18px;
-            height: 18px;
-            border: 3px solid rgba(255, 255, 255, 0.3);
+            width: 12px;
+            height: 12px;
+            border: 2px solid rgba(0, 0, 0, 0.3);
             border-radius: 50%;
-            border-top-color: white;
-            animation: spin 1s linear infinite;
-            margin-left: 10px;
+            border-top-color: #000;
+            animation: spin 0.6s linear infinite;
+            margin-left: 6px;
             vertical-align: middle;
         }
 
@@ -190,38 +224,24 @@
             to { transform: rotate(360deg); }
         }
 
-        .features {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin-top: 25px;
-        }
-
-        .feature-item {
-            text-align: center;
-            padding: 15px;
-            background: #f8f9fa;
-            border-radius: 10px;
-        }
-
-        .feature-item .icon {
-            font-size: 28px;
-            margin-bottom: 5px;
-        }
-
-        .feature-item .text {
-            font-size: 12px;
-            color: #666;
-            font-weight: 600;
+        @media (max-width: 640px) {
+            .auth-container {
+                padding: 32px 24px;
+            }
+            
+            .features {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
 <body>
     <div class="auth-container">
         <div class="auth-header">
-            <h1>🎤 Snoop Dogg Checker</h1>
-            <p class="subtitle">Verificación de Tarjetas</p>
-            <span class="beta-badge">🔒 BETA CERRADA</span>
+            <div class="logo">🌙</div>
+            <h1>Dark Checker</h1>
+            <p class="subtitle">Card Verification System</p>
+            <span class="beta-badge">🔒 Restricted</span>
         </div>
 
         <div id="error-message" class="error-message"></div>
@@ -229,52 +249,58 @@
 
         <form id="auth-form">
             <div class="form-group">
-                <label for="access-key">🔑 Clave de Acceso</label>
-                <input type="text" id="access-key" placeholder="Pega tu clave de acceso aquí" required autofocus>
+                <label for="access-key">Access Key</label>
+                <input 
+                    type="text" 
+                    id="access-key" 
+                    placeholder="Enter your access key" 
+                    required 
+                    autofocus
+                    autocomplete="off"
+                >
             </div>
 
             <button type="submit" class="btn-auth" id="submit-btn">
-                Acceder al Checker
+                Continue to Dashboard
             </button>
         </form>
 
         <div class="features">
             <div class="feature-item">
-                <div class="icon">✅</div>
-                <div class="text">Verificación Auth</div>
+                <div class="icon">🔓</div>
+                <div class="text">Auth Mode</div>
             </div>
             <div class="feature-item">
                 <div class="icon">⚡</div>
-                <div class="text">Respuesta Rápida</div>
+                <div class="text">Instant</div>
             </div>
             <div class="feature-item">
-                <div class="icon">🔒</div>
-                <div class="text">100% Seguro</div>
+                <div class="icon">🎯</div>
+                <div class="text">Accurate</div>
             </div>
             <div class="feature-item">
-                <div class="icon">📊</div>
-                <div class="text">Info Detallada</div>
+                <div class="icon">💳</div>
+                <div class="text">BIN Info</div>
             </div>
         </div>
 
         <div class="info-box">
             <div class="icon">💡</div>
-            <p><strong>¿No tienes acceso?</strong><br>
-            Contacta al administrador para obtener tu clave de acceso única.</p>
+            <p>
+                <strong>Need access?</strong><br>
+                Contact administrator for credentials.
+            </p>
         </div>
     </div>
 
     <script>
-        // Cargar key guardada al iniciar la página
         window.addEventListener('DOMContentLoaded', function() {
             const savedKey = localStorage.getItem('checker_access_key');
             const keyInput = document.getElementById('access-key');
             
             if (savedKey) {
                 keyInput.value = savedKey;
-                keyInput.placeholder = 'Clave guardada - Click para acceder';
-                // Opcional: puedes hacer auto-submit aquí si quieres
-                // document.getElementById('auth-form').dispatchEvent(new Event('submit'));
+                keyInput.placeholder = 'Using saved key';
             }
         });
 
@@ -290,79 +316,64 @@
             successDiv.style.display = 'none';
 
             if (!key) {
-                errorDiv.textContent = '❌ Por favor ingresa una clave de acceso';
+                errorDiv.textContent = 'Please enter an access key';
                 errorDiv.style.display = 'block';
                 return;
             }
 
-            // Deshabilitar botón y mostrar loading
             submitBtn.disabled = true;
-            submitBtn.innerHTML = 'Verificando... <span class="loading"></span>';
+            submitBtn.innerHTML = 'Verifying... <span class="loading"></span>';
 
             try {
                 const response = await fetch('/checker/auth', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
+                    headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({ key: key })
                 });
 
                 const data = await response.json();
 
                 if (data.success) {
-                    // Guardar la key en localStorage para próximos usos
                     localStorage.setItem('checker_access_key', key);
-                    
-                    successDiv.textContent = '✅ Acceso concedido! Redirigiendo...';
+                    successDiv.textContent = 'Access granted! Redirecting...';
                     successDiv.style.display = 'block';
-                    setTimeout(() => {
-                        window.location.href = '/checker';
-                    }, 1000);
+                    setTimeout(() => window.location.href = '/checker', 1200);
                 } else {
-                    // Si la key es inválida, eliminarla del localStorage
                     if (localStorage.getItem('checker_access_key') === key) {
                         localStorage.removeItem('checker_access_key');
                     }
-                    
-                    errorDiv.textContent = '❌ ' + (data.error || 'Clave inválida');
+                    errorDiv.textContent = data.error || 'Invalid access key';
                     errorDiv.style.display = 'block';
                     submitBtn.disabled = false;
-                    submitBtn.textContent = 'Acceder al Checker';
+                    submitBtn.textContent = 'Continue to Dashboard';
                 }
             } catch (error) {
-                errorDiv.textContent = '❌ Error de conexión. Intenta nuevamente.';
+                errorDiv.textContent = 'Connection error. Please try again.';
                 errorDiv.style.display = 'block';
                 submitBtn.disabled = false;
-                submitBtn.textContent = 'Acceder al Checker';
+                submitBtn.textContent = 'Continue to Dashboard';
             }
         });
 
-        // Auto-paste si el clipboard tiene una key y no hay key guardada
         document.getElementById('access-key').addEventListener('focus', async function() {
-            if (this.value) return; // Ya tiene valor (key guardada)
-            
+            if (this.value) return;
             try {
                 const clipboardText = await navigator.clipboard.readText();
                 if (clipboardText && clipboardText.length > 20) {
                     this.value = clipboardText;
                 }
-            } catch (err) {
-                // Clipboard API no disponible o sin permisos
-            }
+            } catch (err) {}
         });
 
-        // Permitir borrar la key guardada con doble click en el input
         document.getElementById('access-key').addEventListener('dblclick', function() {
             const savedKey = localStorage.getItem('checker_access_key');
-            if (savedKey && confirm('¿Borrar la clave guardada?')) {
+            if (savedKey && confirm('Delete saved access key?')) {
                 localStorage.removeItem('checker_access_key');
                 this.value = '';
-                this.placeholder = 'Pega tu clave de acceso aquí';
-                alert('✅ Clave borrada. Ingresa una nueva.');
+                this.placeholder = 'Enter your access key';
+                alert('✓ Access key deleted');
             }
         });
     </script>
 </body>
 </html>
-

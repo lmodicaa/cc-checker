@@ -17,6 +17,7 @@ from functools import wraps
 from models import db, Config, User, CheckHistory
 from gates.braintree3d import verify_braintree_card
 from gates.stripecharged import verify_stripe_charge
+from gates.stripe_auth import verify_stripe_auth
 
 app = Flask(__name__)
 
@@ -106,6 +107,13 @@ def init_db():
                     'description': 'Sin Cargo',
                     'icon': '🔓',
                     'color': '#667eea'
+                },
+                'stripe_auth': {
+                    'enabled': True,
+                    'name': 'Stripe Auth',
+                    'description': 'Auth Gate',
+                    'icon': '🌊',
+                    'color': '#06b6d4'
                 },
                 'charge': {
                     'enabled': False,
@@ -374,6 +382,13 @@ def get_gates_config():
             'description': 'Sin Cargo',
             'icon': '🔓',
             'color': '#667eea'
+        },
+        'stripe_auth': {
+            'enabled': True,
+            'name': 'Stripe Auth',
+            'description': 'Auth Gate',
+            'icon': '🌊',
+            'color': '#06b6d4'
         },
         'charge': {
             'enabled': False,
@@ -856,10 +871,10 @@ def checker_get_config():
 
 
 @app.route('/checker/verify_auth', methods=['POST'])
-@rate_limit(max_requests=60, window_seconds=60)  # 60 checks por minuto por IP
+@rate_limit(max_requests=30, window_seconds=60)  # 30 checks por minuto por IP
 @key_required
 def checker_verify_auth():
-    """Endpoint para verificar tarjetas en modo Auth (solo para usuarios con key)"""
+    """Endpoint para verificar tarjetas en modo Auth usando charitywater.org (sin cargo)"""
     try:
         config = load_config()
         
@@ -870,8 +885,14 @@ def checker_verify_auth():
                 'error': 'Sistema en mantenimiento'
             }), 503
         
-        # Configurar Stripe API key
-        stripe.api_key = config['stripe_sk']
+        # Verificar si el gate Auth está habilitado
+        gates_config = get_gates_config()
+        if not gates_config.get('auth', {}).get('enabled', True):
+            return jsonify({
+                'success': False,
+                'error': '⚠️ Gate Auth está actualmente en mantenimiento.',
+                'status': 'maintenance'
+            }), 503
         
         # Obtener información del usuario
         user_key = session.get('user_key')
@@ -886,33 +907,38 @@ def checker_verify_auth():
         # Verificar límite diario
         today = date.today()
         if user.last_check_date != today:
-            # Resetear contador si es un nuevo día
             user.checks_today = 0
             user.last_check_date = today
             db.session.commit()
         
-        # Usar el límite personalizado de cada usuario
         if user.checks_today >= user.max_checks:
             return jsonify({
                 'success': False,
-                'error': f'Has alcanzado el límite de {user.max_checks} checks. Contacta al administrador para obtener una nueva key o aumentar tu límite.'
+                'error': f'Has alcanzado el límite de {user.max_checks} checks. Contacta al administrador.'
             }), 429
         
-        # Obtener datos de la tarjeta
+        # Obtener datos de la tarjeta (DATOS DIRECTOS, NO payment_method_id)
         data = request.json
-        payment_method_id = data.get('payment_method_id')
+        card_number = data.get('card_number', '').strip().replace(' ', '').replace('-', '')
+        exp_month = data.get('exp_month', '').strip()
+        exp_year = data.get('exp_year', '').strip()
+        cvv = data.get('cvv', '').strip()
         
-        if not payment_method_id:
+        # Validar que se proporcionaron todos los datos
+        if not all([card_number, exp_month, exp_year, cvv]):
             return jsonify({
                 'success': False,
-                'error': 'No se proporcionó payment_method_id'
+                'error': 'Datos de tarjeta incompletos. Proporciona: card_number, exp_month, exp_year, cvv'
             }), 400
         
-        # Crear registro de historial ANTES de intentar la verificación
-        # Así siempre existirá para actualizar en caso de error
+        # Formatear año (asegurar formato correcto)
+        if len(str(exp_year)) == 2:
+            exp_year = '20' + str(exp_year)
+        
+        # Crear registro de historial
         check_record = CheckHistory(
             user_id=user.id,
-            payment_method_id=payment_method_id,
+            payment_method_id=None,
             status='pending',
             mode='auth'
         )
@@ -920,83 +946,52 @@ def checker_verify_auth():
         db.session.commit()
         
         try:
-            # Crear SetupIntent (Auth mode)
-            setup_intent = stripe.SetupIntent.create(
-                payment_method=payment_method_id,
-                payment_method_types=['card']
+            # Obtener user agent
+            user_agent = request.headers.get('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36')
+            
+            # USAR EL GATE stripe_auth.py DIRECTAMENTE
+            result = verify_stripe_auth(
+                card_number=card_number,
+                exp_month=str(exp_month).zfill(2),
+                exp_year=str(exp_year),
+                cvv=str(cvv),
+                user_agent=user_agent
             )
             
-            if not setup_intent or not setup_intent.id:
-                check_record.status = 'error'
-                check_record.error_code = 'setup_intent_create_failed'
-                user.checks_today += 1
-                db.session.commit()
-                return jsonify({
-                    'success': False,
-                    'error': 'Error al crear SetupIntent',
-                    'status': 'error'
-                }), 400
-            
-            setup_intent = stripe.SetupIntent.confirm(
-                setup_intent.id,
-                payment_method=payment_method_id,
-            )
-            
-            if not setup_intent:
-                check_record.status = 'error'
-                check_record.error_code = 'setup_intent_confirm_failed'
-                user.checks_today += 1
-                db.session.commit()
-                return jsonify({
-                    'success': False,
-                    'error': 'Error al confirmar SetupIntent',
-                    'status': 'error'
-                }), 400
-            
-            # Incrementar contador solo después de confirmar
+            # Incrementar contador
             user.checks_today += 1
+            
+            # Actualizar historial según el resultado
+            if result.get('success'):
+                check_record.status = 'approved'
+                details = result.get('details', {})
+                card_details = details.get('card', {})
+                check_record.card_last4 = card_number[-4:] if len(card_number) >= 4 else ''
+                check_record.card_brand = card_details.get('brand', '')
+                check_record.card_type = card_details.get('type', '')
+                check_record.card_country = card_details.get('country', '')
+            else:
+                # Distinguir entre error de merchant y error de tarjeta
+                error_code = result.get('details', {}).get('error_code', result.get('status', 'error'))
+                if error_code in ['merchant_account_error', 'merchant_restriction']:
+                    check_record.status = 'error'
+                    # No incrementar contador si es error del merchant
+                    user.checks_today -= 1
+                else:
+                    check_record.status = 'declined'
+                check_record.error_code = error_code
+            
             db.session.commit()
             
-            # Obtener información del PaymentMethod
-            payment_method = stripe.PaymentMethod.retrieve(payment_method_id)
-            
-            # Validar que el payment_method existe
-            if not payment_method:
-                return jsonify({
-                    'success': False,
-                    'error': 'No se pudo obtener información del método de pago',
-                    'status': 'error'
-                }), 400
-            
-            # Obtener información de la tarjeta de forma segura
-            card_info = {}
-            if hasattr(payment_method, 'card') and payment_method.card:
-                card_info = payment_method.card
-            
-            # Obtener información del BIN para el país
-            bin_info = None
-            bin_number = None
-            
-            if card_info:
-                # Intentar obtener el BIN
-                for attr in ['bin', 'iin', 'issuer_identification_number']:
-                    if hasattr(card_info, attr):
-                        bin_number = getattr(card_info, attr, None)
-                        if bin_number:
-                            break
-                
-                if not bin_number and isinstance(card_info, dict):
-                    bin_number = card_info.get('bin') or card_info.get('iin')
-                
+            # Obtener información del BIN
+            bin_info = result.get('details', {}).get('bin_info')
+            if not bin_info:
+                # Si no hay bin_info, intentar obtenerlo desde el número de tarjeta
+                bin_number = card_number[:6] if len(card_number) >= 6 else ''
                 if bin_number:
-                    bin_number = str(bin_number).strip()
-                
-                # Consultar binlist.net solo para obtener info del país
-                if bin_number and len(bin_number) >= 6:
                     try:
-                        bin_lookup = bin_number[:6]
                         bin_response = requests.get(
-                            f"https://lookup.binlist.net/{bin_lookup}",
+                            f"https://lookup.binlist.net/{bin_number}",
                             headers={'Accept-Version': '3'},
                             timeout=5
                         )
@@ -1006,154 +1001,70 @@ def checker_verify_auth():
                                 bin_info = None
                     except Exception:
                         bin_info = None
-                
-                # Si no hay BIN, construir info básica del país desde Stripe
-                if not bin_info and card_info.get('country'):
-                    bin_info = {
-                        'country': {
-                            'alpha2': card_info.get('country'),
-                            'name': None
-                        }
-                    }
             
-            if setup_intent.status == 'succeeded':
-                # Actualizar historial como aprobado
-                check_record.status = 'approved'
-                check_record.card_last4 = card_info.get('last4')
-                check_record.card_brand = card_info.get('brand')
-                check_record.card_type = card_info.get('funding')
-                check_record.card_country = card_info.get('country')
-                db.session.commit()
-                
-                return jsonify({
-                    'success': True,
-                    'message': 'Tarjeta válida (Auth) ✅',
-                    'status': 'approved',
-                    'mode': 'auth',
-                    'checks_remaining': user.max_checks - user.checks_today,
-                    'details': {
-                        'setup_intent_id': setup_intent.id,
-                        'status': setup_intent.status,
-                        'card': {
-                            'last4': card_info.get('last4', ''),
-                            'brand': card_info.get('brand', '').upper() if card_info.get('brand') else '',
-                            'type': card_info.get('funding', '').upper() if card_info.get('funding') else '',
-                            'exp_month': card_info.get('exp_month', ''),
-                            'exp_year': card_info.get('exp_year', ''),
-                            'country': card_info.get('country', '').upper() if card_info.get('country') else '',
-                            'bin': str(bin_number) if bin_number else '',
-                            'issuer': card_info.get('issuer', ''),
-                            'networks': card_info.get('networks', {}),
-                        },
-                        'bin_info': bin_info,
-                        'stripe_bin': str(bin_number) if bin_number else ''
-                    }
-                })
-            elif setup_intent.status == 'requires_action':
-                # Actualizar historial como aprobado (requiere 3DS)
-                check_record.status = 'approved'
-                check_record.card_last4 = card_info.get('last4')
-                check_record.card_brand = card_info.get('brand')
-                check_record.card_type = card_info.get('funding')
-                check_record.card_country = card_info.get('country')
-                db.session.commit()
-                
-                return jsonify({
-                    'success': True,
-                    'message': 'Tarjeta válida (Auth) ✅ - Requiere 3D Secure',
-                    'status': 'approved',
-                    'mode': 'auth',
-                    'checks_remaining': user.max_checks - user.checks_today,
-                    'details': {
-                        'setup_intent_id': setup_intent.id,
-                        'status': setup_intent.status,
-                        'requires_3ds': True,
-                        'card': {
-                            'last4': card_info.get('last4', ''),
-                            'brand': card_info.get('brand', '').upper() if card_info.get('brand') else '',
-                            'type': card_info.get('funding', '').upper() if card_info.get('funding') else '',
-                            'exp_month': card_info.get('exp_month', ''),
-                            'exp_year': card_info.get('exp_year', ''),
-                            'country': card_info.get('country', '').upper() if card_info.get('country') else '',
-                            'bin': str(bin_number) if bin_number else '',
-                            'issuer': card_info.get('issuer', ''),
-                            'networks': card_info.get('networks', {}),
-                        },
-                        'bin_info': bin_info,
-                        'stripe_bin': str(bin_number) if bin_number else ''
-                    }
-                })
-            else:
-                # Actualizar historial como error
-                check_record.status = 'error'
-                check_record.error_code = f'unexpected_status_{setup_intent.status}'
-                db.session.commit()
-                
-                return jsonify({
-                    'success': False,
-                    'error': f'Estado inesperado: {setup_intent.status}',
-                    'status': 'error',
-                    'details': {'status': setup_intent.status}
-                })
-        
-        except CardError as e:
-            # Incrementar contador incluso en errores
-            user.checks_today += 1
+            # Preparar respuesta
+            success = result.get('success', False)
+            status = result.get('status', 'error')
+            message = result.get('message', '')
             
-            # Actualizar historial como rechazado
-            check_record.status = 'declined'
-            check_record.error_code = getattr(e, 'code', None)
-            db.session.commit()
+            # Si no hay mensaje, generar uno basado en el status
+            if not message or message.strip() == '':
+                if success:
+                    message = 'Tarjeta válida ✅ (Auth - Sin Cargo)'
+                elif status == 'declined':
+                    message = 'Tarjeta rechazada ❌'
+                elif status == 'error':
+                    message = 'Error al procesar la tarjeta'
+                else:
+                    message = f'Error: {status}'
             
-            error_details = parse_error_details(e)
-            return jsonify({
-                'success': False,
-                'error': error_details['message'],
-                'status': 'declined',
+            response_data = {
+                'success': success,
+                'message': message,
+                'status': status,
                 'mode': 'auth',
                 'checks_remaining': user.max_checks - user.checks_today,
-                'details': error_details
-            })
+                'details': {
+                    'card': result.get('details', {}).get('card', {}),
+                    'bin_info': bin_info
+                }
+            }
+            
+            # Si hay error, asegurarse de que esté en el campo 'error' también
+            if not success:
+                response_data['error'] = message
+                # Si es error de merchant, retornar 503 en lugar de 400
+                if status == 'error':
+                    return jsonify(response_data), 503
+            
+            return jsonify(response_data)
         
-    except AuthenticationError as e:
-        # Si el check_record existe, actualizarlo
-        if 'check_record' in locals() and check_record:
-            check_record.status = 'error'
-            check_record.error_code = 'authentication_error'
+        except Exception as e:
+            user.checks_today += 1
+            if 'check_record' in locals() and check_record:
+                check_record.status = 'error'
+                check_record.error_code = 'unexpected_error'
             db.session.commit()
-        
-        return jsonify({
-            'success': False,
-            'error': f'Error de autenticación con Stripe: {str(e)}',
-            'status': 'auth_error'
-        }), 401
-    
-    except StripeError as e:
-        error_details = parse_error_details(e)
-        
-        # Si el check_record existe, actualizarlo
-        if 'check_record' in locals() and check_record:
-            check_record.status = 'error'
-            check_record.error_code = getattr(e, 'code', 'stripe_error')
-            db.session.commit()
-        
-        return jsonify({
-            'success': False,
-            'error': error_details['message'],
-            'status': 'error',
-            'details': error_details
-        }), 400
+            
+            error_msg = str(e) if e else 'Error desconocido'
+            logger.error(f'Error en verify_auth: {error_msg}', exc_info=True)
+            
+            return jsonify({
+                'success': False,
+                'error': f'Error al procesar tarjeta: {error_msg}',
+                'message': f'Error al procesar tarjeta: {error_msg}',
+                'status': 'error',
+                'mode': 'auth',
+                'checks_remaining': user.max_checks - user.checks_today
+            }), 500
     
     except Exception as e:
-        # Si el check_record existe, actualizarlo
-        if 'check_record' in locals() and check_record:
-            check_record.status = 'error'
-            check_record.error_code = 'unexpected_error'
-            db.session.commit()
-        
+        error_msg = str(e) if e else 'Error desconocido en el servidor'
+        logger.error(f'Error general en verify_auth: {error_msg}', exc_info=True)
         return jsonify({
             'success': False,
-            'error': f'Error inesperado: {str(e)}',
+            'error': f'Error al procesar la solicitud: {error_msg}',
+            'message': f'Error al procesar la solicitud: {error_msg}',
             'status': 'error'
         }), 500
 
@@ -1361,6 +1272,203 @@ def checker_verify_charge():
     except Exception as e:
         error_msg = str(e) if e else 'Error desconocido en el servidor'
         logger.error(f'Error en verify_charge (outer): {error_msg}', exc_info=True)
+        return jsonify({
+            'success': False,
+            'error': f'Error al procesar la solicitud: {error_msg}',
+            'message': f'Error al procesar la solicitud: {error_msg}',
+            'status': 'error'
+        }), 500
+
+@app.route('/checker/verify_stripe_auth', methods=['POST'])
+@rate_limit(max_requests=30, window_seconds=60)
+@key_required
+def checker_verify_stripe_auth():
+    """Endpoint para verificar tarjetas usando Stripe Auth (charitywater.org)"""
+    try:
+        config = load_config()
+        
+        # Verificar modo mantenimiento
+        if config.get('maintenance_mode', False):
+            return jsonify({
+                'success': False,
+                'error': 'Sistema en mantenimiento'
+            }), 503
+        
+        # Verificar si el gate stripe_auth está habilitado
+        gates_config = get_gates_config()
+        if not gates_config.get('stripe_auth', {}).get('enabled', True):
+            return jsonify({
+                'success': False,
+                'error': '⚠️ Gate Stripe Auth está actualmente en mantenimiento.',
+                'status': 'maintenance'
+            }), 503
+        
+        # Obtener información del usuario
+        user_key = session.get('user_key')
+        user = User.query.filter_by(key=user_key).first()
+        
+        if not user:
+            return jsonify({
+                'success': False,
+                'error': 'Usuario no encontrado'
+            }), 404
+        
+        # Verificar límite diario
+        today = date.today()
+        if user.last_check_date != today:
+            user.checks_today = 0
+            user.last_check_date = today
+            db.session.commit()
+        
+        if user.checks_today >= user.max_checks:
+            return jsonify({
+                'success': False,
+                'error': f'Has alcanzado el límite de {user.max_checks} checks. Contacta al administrador.'
+            }), 429
+        
+        # Obtener datos de la tarjeta
+        data = request.json
+        card_number = data.get('card_number', '').strip().replace(' ', '').replace('-', '')
+        exp_month = data.get('exp_month', '').strip()
+        exp_year = data.get('exp_year', '').strip()
+        cvv = data.get('cvv', '').strip()
+        
+        if not all([card_number, exp_month, exp_year, cvv]):
+            return jsonify({
+                'success': False,
+                'error': 'Datos de tarjeta incompletos'
+            }), 400
+        
+        # Formatear año (asegurar formato correcto)
+        if len(str(exp_year)) == 2:
+            exp_year = '20' + str(exp_year)
+        
+        # Crear registro de historial
+        check_record = CheckHistory(
+            user_id=user.id,
+            payment_method_id=None,
+            status='pending',
+            mode='stripe_auth'
+        )
+        db.session.add(check_record)
+        db.session.commit()
+        
+        try:
+            # Obtener user agent
+            user_agent = request.headers.get('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36')
+            
+            # Llamar a la función de verificación
+            result = verify_stripe_auth(
+                card_number=card_number,
+                exp_month=str(exp_month).zfill(2),
+                exp_year=str(exp_year),
+                cvv=str(cvv),
+                user_agent=user_agent
+            )
+            
+            # Incrementar contador
+            user.checks_today += 1
+            
+            # Actualizar historial según el resultado
+            if result.get('success'):
+                check_record.status = 'approved'
+                details = result.get('details', {})
+                card_details = details.get('card', {})
+                check_record.card_last4 = card_number[-4:] if len(card_number) >= 4 else ''
+                check_record.card_brand = card_details.get('brand', '')
+                check_record.card_type = card_details.get('type', '')
+                check_record.card_country = card_details.get('country', '')
+            else:
+                # Distinguir entre error de merchant y error de tarjeta
+                error_code = result.get('details', {}).get('error_code', result['status'])
+                if error_code in ['merchant_account_error', 'merchant_restriction']:
+                    check_record.status = 'error'
+                    # No incrementar contador si es error del merchant
+                    user.checks_today -= 1
+                else:
+                    check_record.status = 'declined'
+                check_record.error_code = error_code
+            
+            db.session.commit()
+            
+            # Obtener información del BIN
+            bin_info = result.get('details', {}).get('bin_info')
+            if not bin_info:
+                # Si no hay bin_info, intentar obtenerlo desde el número de tarjeta
+                bin_number = card_number[:6] if len(card_number) >= 6 else ''
+                if bin_number:
+                    try:
+                        bin_response = requests.get(
+                            f"https://lookup.binlist.net/{bin_number}",
+                            headers={'Accept-Version': '3'},
+                            timeout=5
+                        )
+                        if bin_response.status_code == 200:
+                            bin_info = bin_response.json()
+                            if not bin_info.get('country'):
+                                bin_info = None
+                    except Exception:
+                        bin_info = None
+            
+            # Preparar respuesta
+            success = result.get('success', False)
+            status = result.get('status', 'error')
+            message = result.get('message', '')
+            
+            # Si no hay mensaje, generar uno basado en el status
+            if not message or message.strip() == '':
+                if success:
+                    message = 'Tarjeta válida ✅ (Auth - Sin Cargo)'
+                elif status == 'declined':
+                    message = 'Tarjeta rechazada ❌'
+                elif status == 'error':
+                    message = 'Error al procesar la tarjeta'
+                else:
+                    message = f'Error: {status}'
+            
+            response_data = {
+                'success': success,
+                'message': message,
+                'status': status,
+                'mode': 'stripe_auth',
+                'checks_remaining': user.max_checks - user.checks_today,
+                'details': {
+                    'card': result.get('details', {}).get('card', {}),
+                    'bin_info': bin_info
+                }
+            }
+            
+            # Si hay error, asegurarse de que esté en el campo 'error' también
+            if not success:
+                response_data['error'] = message
+                # Si es error de merchant, retornar 503 en lugar de 400
+                if status == 'error':
+                    return jsonify(response_data), 503
+            
+            return jsonify(response_data)
+        
+        except Exception as e:
+            user.checks_today += 1
+            if 'check_record' in locals() and check_record:
+                check_record.status = 'error'
+                check_record.error_code = 'unexpected_error'
+            db.session.commit()
+            
+            error_msg = str(e) if e else 'Error desconocido'
+            logger.error(f'Error en verify_stripe_auth: {error_msg}', exc_info=True)
+            
+            return jsonify({
+                'success': False,
+                'error': f'Error al procesar tarjeta: {error_msg}',
+                'message': f'Error al procesar tarjeta: {error_msg}',
+                'status': 'error',
+                'mode': 'stripe_auth',
+                'checks_remaining': user.max_checks - user.checks_today
+            }), 500
+    
+    except Exception as e:
+        error_msg = str(e) if e else 'Error desconocido en el servidor'
+        logger.error(f'Error general en verify_stripe_auth: {error_msg}', exc_info=True)
         return jsonify({
             'success': False,
             'error': f'Error al procesar la solicitud: {error_msg}',
